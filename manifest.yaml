@@ -1,0 +1,192 @@
+manifestSchemaVersion: 3
+appId: my-app
+version: 1.0.0
+displayName: "My App"
+description: "SotaAgent app."
+publisher:
+  id: local-dev
+  displayName: "Local Dev"
+  contact: dev@local-dev.example
+contributes:
+  skills:
+    - name: count-words
+      description: When to call count-words and how to report the exact totals.
+      appendsTo: system
+      content: src/skills/count-words
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: analyze-text
+      description: When to call analyze-text for pasted inline text or bundled app sample files — not for chat attachments.
+      appendsTo: system
+      content: src/skills/analyze-text
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: generate-file
+      description: When to call generate-file to create downloadable txt, md, json, csv, or pdf files.
+      appendsTo: system
+      content: src/skills/generate-file
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: analyze-file
+      description: When the user attached a chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically call upload-file then analyze-file without waiting for the user to say upload.
+      appendsTo: system
+      content: src/skills/analyze-file
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: meeting-minutes
+      description: Turn messy meeting notes into structured office minutes and a downloadable Word document (.docx).
+      appendsTo: system
+      content: src/skills/meeting-minutes
+      timeoutMs: 3000
+      failure_mode: skip
+  tools:
+    - name: count-words
+      description: Count words, characters, and lines in the provided text. Use when the user needs an exact length or word count. Returns wordCount, characterCount, and lineCount. Pass the full passage in text; do not summarize first.
+      route: POST /tools/count-words
+      inputSchema: src/schemas/count-words-input.schema.json
+      outputSchema: src/schemas/count-words-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: analyze-text
+      description: Analyze inline pasted text or bundled app sample files only. Do not use for chat attachments — use upload-file then analyze-file when the user attached a file.
+      route: POST /tools/analyze-text
+      inputSchema: src/schemas/analyze-text-input.schema.json
+      outputSchema: src/schemas/analyze-text-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: generate-file
+      description: Generate a downloadable txt, md, json, csv, or pdf file from provided content. Use when the user asks to create, export, or save a file. Returns fileName, sizeBytes, lineCount, and file content for the UI download card. Use valid JSON for json, comma-separated rows for csv, and plain text for pdf.
+      route: POST /tools/generate-file
+      inputSchema: src/schemas/generate-file-input.schema.json
+      outputSchema: src/schemas/generate-file-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: upload-file
+      description: Internal step 1 for reading user files. Call automatically when the user attached a chat file and wants it read or analyzed — the user does not need to say upload. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, and pass fileName such as todo.txt. With pasted text only, set source to content and pass the full content body.
+      route: POST /tools/upload-file
+      inputSchema: src/schemas/upload-file-input.schema.json
+      outputSchema: src/schemas/upload-file-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: analyze-file
+      description: Internal step 2 after upload-file. Call automatically when the user attached a chat file and asked to read, analyze, summarize, or review it. Requires the fileId returned by upload-file for the same workspace. Returns reading stats, summary, preview, and top keywords.
+      route: POST /tools/analyze-file
+      inputSchema: src/schemas/analyze-file-input.schema.json
+      outputSchema: src/schemas/analyze-file-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: meeting-minutes
+      description: Format office meeting notes into structured minutes and generate a downloadable Word document (.docx) in the same call. Use when the user asks for meeting minutes or biên bản họp. Set source to text with raw notes, or source to file with a fileId from upload-file after a chat attachment.
+      route: POST /tools/meeting-minutes
+      inputSchema: src/schemas/meeting-minutes-input.schema.json
+      outputSchema: src/schemas/meeting-minutes-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+  ui:
+    - id: admin-screen
+      kind: nativeModule
+      surface: page
+      slot: admin.workspace.tab
+      sectionId: my-app
+      label: Admin screen
+      route: /my-app/*
+      module:
+        entry: dist/ui/app.js
+        export: AdminScreen
+        styles: dist/ui/app.css
+    - id: count-words-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Word count
+      toolNames:
+        - count-words
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: CountWordsResult
+        styles: dist/ui/app.css
+    - id: analyze-text-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Text analysis
+      toolNames:
+        - analyze-text
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: AnalyzeTextResult
+        styles: dist/ui/app.css
+    - id: generate-file-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Generated file
+      toolNames:
+        - generate-file
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: GenerateFileResult
+        styles: dist/ui/app.css
+    - id: upload-file-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Uploaded file
+      toolNames:
+        - upload-file
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: UploadFileResult
+        styles: dist/ui/app.css
+    - id: analyze-file-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: File analysis
+      toolNames:
+        - analyze-file
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: AnalyzeFileResult
+        styles: dist/ui/app.css
+    - id: meeting-minutes-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Meeting minutes
+      toolNames:
+        - meeting-minutes
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: MeetingMinutesResult
+        styles: dist/ui/app.css
+service:
+  baseUrl: https://my-app.invalid
+health:
+  url: https://my-app.invalid/health
+  intervalSeconds: 60
+environments:
+  local:
+    service:
+      baseUrl: http://localhost:8787
+    health:
+      url: http://localhost:8787/health
+platform: ^1.2.0
+input:
+  fileTypeAllowlistAdditions:
+    - mimeType: text/plain
+      extensions: [txt, md, log]
+    - mimeType: text/csv
+      extensions: [csv]
+    - mimeType: application/json
+      extensions: [json]
+locales:
+  default: en
+  files:
+    en: src/locales/en.json

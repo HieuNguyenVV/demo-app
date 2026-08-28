@@ -1,0 +1,222 @@
+[data-sota-app="my-app"].starter-root {
+  box-sizing: border-box;
+  color: var(--foreground, #15171a);
+  font-family: inherit;
+}
+
+[data-sota-app="my-app"].starter-page {
+  min-height: 100%;
+  padding: 32px;
+}
+
+[data-sota-app="my-app"] .starter-eyebrow {
+  color: #1267e5;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+[data-sota-app="my-app"].starter-result {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+[data-sota-app="my-app"] .count-preview {
+  margin: 8px 0 0;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+[data-sota-app="my-app"] .count-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+[data-sota-app="my-app"] .count-stats dt {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  font-size: 12px;
+}
+
+[data-sota-app="my-app"] .count-stats dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-sota-app="my-app"] .analyze-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+[data-sota-app="my-app"] .analyze-badge {
+  background: color-mix(in srgb, #1267e5 12%, transparent);
+  border-radius: 999px;
+  color: #1267e5;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+[data-sota-app="my-app"] .analyze-file {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: 12px;
+}
+
+[data-sota-app="my-app"] .analyze-summary {
+  margin: 10px 0 0;
+}
+
+[data-sota-app="my-app"] .analyze-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+}
+
+[data-sota-app="my-app"] .analyze-stats dt {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  font-size: 12px;
+}
+
+[data-sota-app="my-app"] .analyze-stats dd {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-sota-app="my-app"] .analyze-keywords {
+  margin-top: 16px;
+}
+
+[data-sota-app="my-app"] .analyze-keywords-title {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+[data-sota-app="my-app"] .analyze-keywords ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-sota-app="my-app"] .analyze-keywords li {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 88px 1fr auto;
+}
+
+[data-sota-app="my-app"] .analyze-keyword-label {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-sota-app="my-app"] .analyze-keyword-bar {
+  background: linear-gradient(90deg, #1267e5, color-mix(in srgb, #1267e5 55%, transparent));
+  border-radius: 999px;
+  display: block;
+  height: 8px;
+  min-width: 12px;
+}
+
+[data-sota-app="my-app"] .analyze-keyword-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-sota-app="my-app"] .generate-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+[data-sota-app="my-app"] .generate-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+}
+
+[data-sota-app="my-app"] .generate-meta dt {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  font-size: 12px;
+}
+
+[data-sota-app="my-app"] .generate-meta dd {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-sota-app="my-app"] .generate-preview {
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  border-radius: 8px;
+  margin: 14px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+[data-sota-app="my-app"] .generate-download {
+  color: #1267e5;
+  display: inline-block;
+  font-weight: 700;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+[data-sota-app="my-app"] .generate-download:hover {
+  text-decoration: underline;
+}
+
+[data-sota-app="my-app"] .file-id {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+[data-sota-app="my-app"] .minutes-section {
+  margin-top: 14px;
+}
+
+[data-sota-app="my-app"] .minutes-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+[data-sota-app="my-app"] .minutes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-sota-app="my-app"] .minutes-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  line-height: 1.4;
+  margin-top: 8px;
+}
+
+[data-sota-app="my-app"] .minutes-meta {
+  color: color-mix(in srgb, currentColor 64%, transparent);
+  font-size: 12px;
+}

@@ -1,0 +1,23 @@
+{
+  "admin.title": "Admin screen",
+  "tool.countWords.title": "Word count",
+  "tool.countWords.streaming": "Reading text…",
+  "tool.countWords.running": "Counting…",
+  "tool.countWords.denied": "Word count was not approved.",
+  "tool.countWords.error": "Could not count words.",
+  "tool.countWords.words": "Words",
+  "tool.countWords.characters": "Characters",
+  "tool.countWords.lines": "Lines",
+  "tool.analyzeText.title": "Text analysis",
+  "tool.analyzeText.streaming": "Preparing analysis…",
+  "tool.analyzeText.running": "Analyzing text…",
+  "tool.analyzeText.denied": "Text analysis was not approved.",
+  "tool.analyzeText.error": "Could not analyze text.",
+  "tool.generateFile.title": "Generated file",
+  "tool.generateFile.streaming": "Preparing file…",
+  "tool.generateFile.running": "Generating file…",
+  "tool.generateFile.denied": "File generation was not approved.",
+  "tool.generateFile.error": "Could not generate file.",
+  "tool.uploadFile.title": "Uploaded file",
+  "tool.analyzeFile.title": "File analysis"
+}

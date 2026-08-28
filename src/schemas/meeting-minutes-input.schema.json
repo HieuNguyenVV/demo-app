@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["text", "file"],
+      "description": "Use file with a fileId from upload-file. Use text for pasted meeting notes."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000,
+      "description": "Required when source is text. Raw meeting notes with sections or bullet lists."
+    },
+    "fileId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "description": "Required when source is file. App fileId returned by upload-file."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Optional meeting title override."
+    },
+    "meetingDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Optional meeting date in YYYY-MM-DD format."
+    }
+  }
+}

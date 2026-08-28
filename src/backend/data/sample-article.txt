@@ -1,0 +1,8 @@
+SotaAgents helps teams ship AI apps with a strict manifest contract.
+Each app contributes tools, skills, and native UI modules to the host platform.
+The backend verifies short-lived invocation tokens before running any tool logic.
+Developers keep tenant boundaries in verified claims, not in request bodies.
+
+Tools should return compact evidence for the model and richer cards for the UI.
+When a user asks for analysis, prefer deterministic backend work over guessing.
+Good tools explain when to call them, what they return, and what limits apply.

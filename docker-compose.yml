@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      SOTA_CORE_ORIGIN: https://api.v4.stg.sotaagents.ai
+    volumes:
+      - uploads:/app/dist/backend/uploads
+
+volumes:
+  uploads:

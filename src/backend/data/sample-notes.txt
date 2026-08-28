@@ -1,0 +1,7 @@
+Meeting notes
+- Ship count-words for quick totals
+- Add analyze-text for deeper stats and top keywords
+- Keep sample files inside the app backend data folder
+- Validate input at the HTTP boundary
+
+Next step: run npm run dev and test both tools in chat.

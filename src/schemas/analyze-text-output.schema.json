@@ -1,0 +1,91 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "wordCount",
+    "characterCount",
+    "lineCount",
+    "sentenceCount",
+    "averageWordLength",
+    "readingMinutes",
+    "summary",
+    "topWords"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["text", "file"]
+    },
+    "fileName": {
+      "type": "string"
+    },
+    "wordCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "characterCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lineCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sentenceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "averageWordLength": {
+      "type": "number",
+      "minimum": 0
+    },
+    "readingMinutes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "topWords": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["word", "count"],
+        "properties": {
+          "word": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "_sota": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelProjection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "omitKeys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

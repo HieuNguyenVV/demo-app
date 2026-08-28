@@ -1,0 +1,11 @@
+node_modules
+dist
+.sota
+.git
+.env
+.env.*
+!.env.example
+src/backend/uploads
+dist/backend/uploads
+*.md
+.agent

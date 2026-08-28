@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fileName", "format", "content"],
+  "properties": {
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "description": "Base file name without extension, for example sales-report."
+    },
+    "format": {
+      "type": "string",
+      "enum": ["txt", "md", "json", "csv", "pdf"],
+      "description": "Output format for the generated file."
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000,
+      "description": "Full file body to write. Use valid JSON for json, comma-separated rows for csv, and plain text for pdf."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Optional title added to markdown headings or PDF title page."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+.sota/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+src/backend/uploads/
+dist/backend/uploads/

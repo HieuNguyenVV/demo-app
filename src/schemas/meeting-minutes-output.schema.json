@@ -1,0 +1,81 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "title",
+    "meetingDate",
+    "attendeeCount",
+    "decisionCount",
+    "actionItemCount",
+    "summary",
+    "attendees",
+    "agenda",
+    "discussionPoints",
+    "decisions",
+    "actionItems",
+    "nextSteps",
+    "formattedMinutes",
+    "docFileName",
+    "docMimeType",
+    "docContentEncoding",
+    "docSizeBytes",
+    "docContent"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["text", "file"]
+    },
+    "fileId": { "type": "string" },
+    "fileName": { "type": "string" },
+    "title": { "type": "string" },
+    "meetingDate": { "type": "string" },
+    "attendeeCount": { "type": "integer", "minimum": 0 },
+    "decisionCount": { "type": "integer", "minimum": 0 },
+    "actionItemCount": { "type": "integer", "minimum": 0 },
+    "summary": { "type": "string" },
+    "attendees": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "agenda": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "discussionPoints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "decisions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "actionItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "owner": { "type": "string" },
+          "dueHint": { "type": "string" }
+        }
+      }
+    },
+    "nextSteps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "formattedMinutes": { "type": "string" },
+    "docFileName": { "type": "string" },
+    "docMimeType": { "type": "string" },
+    "docContentEncoding": {
+      "type": "string",
+      "enum": ["base64"]
+    },
+    "docSizeBytes": { "type": "integer", "minimum": 0 },
+    "docContent": { "type": "string" }
+  }
+}

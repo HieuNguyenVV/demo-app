@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["text", "file"],
+      "description": "Read inline text or one of the app-owned sample files."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000,
+      "description": "Required when source is text. Pass the full passage."
+    },
+    "fileName": {
+      "type": "string",
+      "enum": ["sample-article.txt", "sample-notes.txt"],
+      "description": "Required when source is file."
+    },
+    "topWordsLimit": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 10,
+      "description": "How many frequent words to return for the UI card. Defaults to 5."
+    }
+  }
+}

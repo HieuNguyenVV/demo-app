@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fileId",
+    "fileName",
+    "mimeType",
+    "sizeBytes",
+    "wordCount",
+    "characterCount",
+    "lineCount",
+    "sentenceCount",
+    "averageWordLength",
+    "readingMinutes",
+    "summary",
+    "preview",
+    "topWords"
+  ],
+  "properties": {
+    "fileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "mimeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "wordCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "characterCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lineCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sentenceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "averageWordLength": {
+      "type": "number",
+      "minimum": 0
+    },
+    "readingMinutes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "preview": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 520
+    },
+    "topWords": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["word", "count"],
+        "properties": {
+          "word": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "_sota": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelProjection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "omitKeys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

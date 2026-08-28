@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["content", "platform"],
+      "description": "Use platform when the user attached a chat file. Use content when the full text body is already available."
+    },
+    "platformFileId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 120,
+      "description": "Required when source is platform. Use the chat attachment fileId."
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "description": "Original file name, for example todo.txt."
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000,
+      "description": "Required when source is content. Full text body to store on the app server."
+    },
+    "mimeType": {
+      "type": "string",
+      "enum": ["text/plain", "text/csv", "text/markdown", "application/json"],
+      "description": "Optional MIME type when source is content."
+    }
+  }
+}

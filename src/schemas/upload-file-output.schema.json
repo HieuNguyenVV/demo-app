@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "fileId", "fileName", "mimeType", "sizeBytes", "lineCount", "summary"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["content", "platform"]
+    },
+    "fileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "platformFileId": {
+      "type": "string"
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "mimeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "lineCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    }
+  }
+}
