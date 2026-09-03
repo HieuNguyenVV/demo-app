@@ -31,10 +31,11 @@ When a chat attachment is present:
    - `source: "platform"`
    - `platformFileId`: the attachment `fileId` from the chat message
    - `fileName`: the attachment name, for example `todo.txt`
+   - `content`: the **full** attachment text when it is visible in the conversation (do not summarize). The app backend cannot download chat files from Core with an invocation JWT; Core `/api/files/{id}/download` requires a browser user session.
 2. Call `analyze-file` with the app `fileId` returned from step 1.
 
 Do not skip step 1. Do not try to analyze the attachment without uploading it to the app server first.
-Do not ask the user to paste file content when an attachment is already available.
+If `upload-file` returns PLATFORM_FILE_ERROR / 401, retry once with `content` set to the full attachment text.
 
 ## Pasted text flow
 

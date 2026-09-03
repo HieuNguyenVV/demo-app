@@ -25,7 +25,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 20000,
-      "description": "Required when source is content. Full text body to store on the app server."
+      "description": "Required when source is content. Also pass this with source platform when the attachment text is visible in the conversation — the app cannot download chat files with its invocation JWT."
     },
     "mimeType": {
       "type": "string",

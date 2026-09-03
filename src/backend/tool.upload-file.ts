@@ -60,6 +60,14 @@ async function parseInput(
       throw new InvalidToolInputError('platformFileId is required when source is platform');
     }
 
+    if (typeof input.content === 'string' && input.content.length > 0) {
+      return {
+        source: 'platform' as const,
+        platformFileId: input.platformFileId,
+        ...parseTextPayload(input),
+      };
+    }
+
     const downloaded = await downloadPlatformFile(
       invocationToken,
       input.platformFileId,
@@ -77,6 +85,13 @@ async function parseInput(
     };
   }
 
+  return {
+    source: 'content' as const,
+    ...parseTextPayload(input),
+  };
+}
+
+function parseTextPayload(input: Record<string, unknown>) {
   if (typeof input.fileName !== 'string' || !FILE_NAME_PATTERN.test(input.fileName)) {
     throw new InvalidToolInputError('fileName must use letters, numbers, dots, dashes, or underscores only');
   }
@@ -91,7 +106,6 @@ async function parseInput(
   }
 
   return {
-    source: 'content' as const,
     fileName: sanitizeFileName(input.fileName),
     mimeType,
     content: input.content,

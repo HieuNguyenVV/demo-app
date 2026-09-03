@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: my-app
-version: 1.0.0
+version: 1.0.1
 displayName: "My App"
 description: "SotaAgent app."
 publisher:
@@ -62,7 +62,7 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: upload-file
-      description: Internal step 1 for reading user files. Call automatically when the user attached a chat file and wants it read or analyzed — the user does not need to say upload. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, and pass fileName such as todo.txt. With pasted text only, set source to content and pass the full content body.
+      description: Internal step 1 for reading user files. Call automatically when the user attached a chat file and wants it read or analyzed. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, pass fileName such as todo.txt, and pass the full attachment text in content when it is visible in the conversation. With pasted text only, set source to content and pass the full content body.
       route: POST /tools/upload-file
       inputSchema: src/schemas/upload-file-input.schema.json
       outputSchema: src/schemas/upload-file-output.schema.json

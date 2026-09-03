@@ -67,7 +67,7 @@ export async function downloadPlatformFile(
     throw new PlatformFileError(
       401,
       'PLATFORM_FILE_ERROR',
-      'Core rejected the app credential for /api/files/{id}/download. That route expects a user session in the browser, not the app invocation JWT.',
+      'Core rejected the app credential for /api/files/{id}/download (user session required). Retry upload-file with source "platform", platformFileId, fileName, and the full attachment text in content.',
     );
   }
   if (response.status === 404) {
