@@ -98,6 +98,52 @@ export function readUploadedFile(claims: InvocationClaims, fileId: string): {
   };
 }
 
+export function saveBinaryFile(
+  claims: InvocationClaims,
+  fileName: string,
+  mimeType: string,
+  buffer: Buffer,
+): StoredFileRecord {
+  const fileId = randomUUID();
+  const dir = tenantDir(claims);
+  mkdirSync(dir, { recursive: true });
+
+  const record: StoredFileEnvelope = {
+    fileId,
+    fileName,
+    mimeType,
+    sizeBytes: buffer.byteLength,
+    lineCount: 1,
+    createdAt: new Date().toISOString(),
+    iid: claims.iid,
+    oid: claims.oid,
+    wid: claims.wid,
+  };
+
+  writeFileSync(join(dir, `${fileId}.json`), JSON.stringify(record), 'utf8');
+  writeFileSync(join(dir, `${fileId}.bin`), buffer);
+  return {
+    fileId: record.fileId,
+    fileName: record.fileName,
+    mimeType: record.mimeType,
+    sizeBytes: record.sizeBytes,
+    lineCount: record.lineCount,
+    createdAt: record.createdAt,
+  };
+}
+
+export function readBinaryFile(claims: InvocationClaims, fileId: string): {
+  record: StoredFileRecord;
+  buffer: Buffer;
+} {
+  const stored = readUploadedFile(claims, fileId);
+  const binPath = join(tenantDir(claims), `${fileId}.bin`);
+  if (existsSync(binPath)) {
+    return { record: stored.record, buffer: readFileSync(binPath) };
+  }
+  return { record: stored.record, buffer: Buffer.from(stored.content, 'utf8') };
+}
+
 function tenantDir(claims: Pick<InvocationClaims, 'iid' | 'oid' | 'wid'>): string {
   const key = createHash('sha256')
     .update(`${claims.iid}\0${claims.oid}\0${claims.wid}`, 'utf8')

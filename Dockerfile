@@ -19,7 +19,10 @@ ENV HOST=0.0.0.0
 ENV PORT=8787
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm ci --omit=dev
 
 COPY --from=build /app/dist/backend ./dist/backend
 

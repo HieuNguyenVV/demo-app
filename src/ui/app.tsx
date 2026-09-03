@@ -70,6 +70,31 @@ type GenerateDrawioOutput = {
   content: string;
 };
 
+type PdfInput = {
+  action: 'create' | 'edit' | 'extract' | 'analyze';
+  fileName?: string;
+  title?: string;
+  docType?: string;
+  text?: string;
+};
+
+type PdfOutput = {
+  action: 'create' | 'edit' | 'extract' | 'analyze';
+  summary: string;
+  fileName?: string;
+  fileId?: string;
+  docType?: string;
+  mimeType?: string;
+  contentEncoding?: 'base64';
+  sizeBytes?: number;
+  pageCount?: number;
+  wordCount?: number;
+  readingMinutes?: number;
+  preview?: string;
+  content?: string;
+  topWords?: Array<{ word: string; count: number }>;
+};
+
 type UploadFileInput = {
   source: 'content' | 'platform';
   platformFileId?: string;
@@ -408,6 +433,67 @@ export function GenerateDrawioResult({
   );
 }
 
+export function PdfResult({
+  toolResult,
+}: ToolResultSurfaceProps<PdfInput, PdfOutput>) {
+  if (toolResult.state === 'input-streaming') {
+    return (
+      <ToolCard status="Preparing office PDF…" busy>
+        <PdfInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (
+    toolResult.state === 'input-available' ||
+    toolResult.state === 'output-pending' ||
+    toolResult.state === 'approval-requested'
+  ) {
+    return (
+      <ToolCard status="Working on the PDF…" busy>
+        <PdfInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (toolResult.state === 'output-denied') {
+    return <ToolCard status="PDF job was not approved." />;
+  }
+
+  if (toolResult.state === 'output-error') {
+    return <ToolCard status={toolResult.errorText ?? 'Could not complete the PDF job.'} />;
+  }
+
+  if (toolResult.state !== 'output-available') return null;
+
+  const result = toolResult.result;
+  if (!result) return <ToolCard status="Could not complete the PDF job." />;
+
+  return (
+    <ToolCard status="Office PDF">
+      <div className="generate-header">
+        <span className="analyze-badge">{result.action.toUpperCase()}</span>
+        <span className="analyze-file">{result.fileName || 'PDF'}</span>
+      </div>
+      <p className="analyze-summary">{result.summary}</p>
+      <dl className="generate-meta">
+        {result.pageCount != null ? <div><dt>Pages</dt><dd>{result.pageCount}</dd></div> : null}
+        {result.wordCount != null ? <div><dt>Words</dt><dd>{result.wordCount}</dd></div> : null}
+        {result.sizeBytes != null ? <div><dt>Size</dt><dd>{formatBytes(result.sizeBytes)}</dd></div> : null}
+      </dl>
+      {result.preview ? <pre className="generate-preview">{result.preview}</pre> : null}
+      {result.content && result.contentEncoding ? (
+        <DownloadLink
+          fileName={result.fileName || 'document.pdf'}
+          content={result.content}
+          contentEncoding={result.contentEncoding}
+          mimeType={result.mimeType || 'application/pdf'}
+        />
+      ) : null}
+    </ToolCard>
+  );
+}
+
 export function UploadFileResult({
   toolResult,
 }: ToolResultSurfaceProps<UploadFileInput, UploadFileOutput>) {
@@ -657,6 +743,21 @@ function DrawioInputPreview({ input }: { input?: unknown }) {
   );
 }
 
+function PdfInputPreview({ input }: { input?: unknown }) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return <p className="count-preview">Waiting for the model…</p>;
+  }
+  const record = input as Record<string, unknown>;
+  const action = typeof record.action === 'string' ? record.action : 'pdf';
+  const fileName = typeof record.fileName === 'string' ? record.fileName : undefined;
+  const title = typeof record.title === 'string' ? record.title : undefined;
+  return (
+    <p className="count-preview">
+      {action}{fileName ? ` · ${fileName}` : ''}{title ? ` · ${title}` : ''}
+    </p>
+  );
+}
+
 function UploadInputPreview({ input }: { input?: unknown }) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return <p className="count-preview">Waiting for the model…</p>;
@@ -756,6 +857,7 @@ export const surfaces = {
   AnalyzeTextResult,
   GenerateFileResult,
   GenerateDrawioResult,
+  PdfResult,
   UploadFileResult,
   AnalyzeFileResult,
   MeetingMinutesResult,

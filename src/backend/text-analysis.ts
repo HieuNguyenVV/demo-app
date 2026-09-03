@@ -2,6 +2,8 @@ const WORDS_PER_MINUTE = 200;
 const STOP_WORDS = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'in', 'is', 'it',
   'of', 'on', 'or', 'that', 'the', 'to', 'with',
+  'và', 'của', 'các', 'là', 'cho', 'với', 'một', 'không', 'được', 'trong',
+  'này', 'có', 'để', 'từ', 'những', 'về', 'như', 'khi', 'đã', 'sẽ',
 ]);
 
 export type TextAnalysis = {
@@ -50,7 +52,7 @@ export function analyzeTextContent(content: string, topWordsLimit = 5): TextAnal
 
 function tokenize(text: string): string[] {
   if (!text) return [];
-  return text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
+  return text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
 }
 
 function countSentences(text: string): number {

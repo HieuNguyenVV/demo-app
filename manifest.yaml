@@ -1,8 +1,8 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.2
+version: 1.0.3
 displayName: Inkline
-description: Analyze text and files, generate downloads, create draw.io diagrams, and turn messy notes into meeting minutes.
+description: "Office toolkit for PDFs, draw.io diagrams, meeting minutes, and text analysis."
 publisher:
   id: local-dev
   displayName: "Local Dev"
@@ -39,6 +39,30 @@ contributes:
       content: src/skills/analyze-file
       timeoutMs: 3000
       failure_mode: skip
+    - name: pdf-create
+      description: When an office worker needs a new PDF công văn, báo cáo, tờ trình, letter, or biên bản, call pdf with action create.
+      appendsTo: system
+      content: src/skills/pdf-create
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: pdf-edit
+      description: When an office worker needs to stamp, add a cover or notes page, or keep a page range of a PDF, call pdf with action edit.
+      appendsTo: system
+      content: src/skills/pdf-edit
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: pdf-extract
+      description: When an office worker needs text copied out of a PDF into email or Word, call pdf with action extract.
+      appendsTo: system
+      content: src/skills/pdf-extract
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: pdf-analyze
+      description: When an office worker needs a short brief of a PDF before a meeting or forwarding to a manager, call pdf with action analyze.
+      appendsTo: system
+      content: src/skills/pdf-analyze
+      timeoutMs: 3000
+      failure_mode: skip
     - name: meeting-minutes
       description: Turn messy meeting notes into structured office minutes and a downloadable Word document (.docx).
       appendsTo: system
@@ -73,6 +97,13 @@ contributes:
       inputSchema: src/schemas/generate-drawio-input.schema.json
       outputSchema: src/schemas/generate-drawio-output.schema.json
       timeoutMs: 15000
+      failure_mode: abort
+    - name: pdf
+      description: Office PDF desk. Create a memo/report/letter/minutes/proposal PDF; stamp or split an existing PDF; extract text for email/Word; or summarize a PDF before a meeting. Use when the user mentions công văn, báo cáo, tờ trình, PDF, stamp, tách trang, lấy chữ, or tóm tắt file PDF. Do not use generate-file for these jobs. Returns a downloadable PDF for create/edit, or pageCount/preview/extractedText for extract/analyze.
+      route: POST /tools/pdf
+      inputSchema: src/schemas/pdf-input.schema.json
+      outputSchema: src/schemas/pdf-output.schema.json
+      timeoutMs: 20000
       failure_mode: abort
     - name: upload-file
       description: Internal step 1 for reading user files. Call automatically when the user attached a chat file and wants it read or analyzed. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, pass fileName such as todo.txt, and pass the full attachment text in content when it is visible in the conversation. With pasted text only, set source to content and pass the full content body.
@@ -155,6 +186,18 @@ contributes:
         entry: dist/ui/app.js
         export: GenerateDrawioResult
         styles: dist/ui/app.css
+    - id: pdf-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Office PDF
+      toolNames:
+        - pdf
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: PdfResult
+        styles: dist/ui/app.css
     - id: upload-file-result
       kind: nativeModule
       surface: tool-view
@@ -211,6 +254,8 @@ input:
       extensions: [csv]
     - mimeType: application/json
       extensions: [json]
+    - mimeType: application/pdf
+      extensions: [pdf]
 locales:
   default: en
   files:

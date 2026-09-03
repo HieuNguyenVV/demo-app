@@ -1,0 +1,99 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["create", "edit", "extract", "analyze"],
+      "description": "Office PDF job: create a memo/report, edit an existing PDF, extract text, or summarize it."
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "description": "Base file name without extension, for example bao-cao-tuan-36."
+    },
+    "docType": {
+      "type": "string",
+      "enum": ["memo", "report", "letter", "minutes", "proposal", "other"],
+      "description": "Office document kind for create. Default report."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 160,
+      "description": "Document title, cover heading, or stamp text context."
+    },
+    "organization": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Company or department name printed at the top of a created PDF."
+    },
+    "date": {
+      "type": "string",
+      "maxLength": 40,
+      "description": "Document date, for example 2026-09-03 or 03/09/2026."
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 12000,
+      "description": "Body of a created PDF, addendum/cover text, or stamp label such as MAT or COPY."
+    },
+    "signer": {
+      "type": "string",
+      "maxLength": 80,
+      "description": "Signatory name at the bottom of a created PDF."
+    },
+    "signerTitle": {
+      "type": "string",
+      "maxLength": 80,
+      "description": "Signatory role, for example Truong phong Hanh chinh."
+    },
+    "editMode": {
+      "type": "string",
+      "enum": ["stamp", "append-page", "cover-page", "page-range"],
+      "description": "How to edit: header/footer/watermark stamp, extra notes page, cover page, or keep a page range."
+    },
+    "stampPosition": {
+      "type": "string",
+      "enum": ["header", "footer", "watermark"],
+      "description": "Stamp placement for editMode stamp. Default header."
+    },
+    "pageStart": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 200,
+      "description": "First 1-based page to keep for page-range."
+    },
+    "pageEnd": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 200,
+      "description": "Last 1-based page to keep for page-range."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["file", "platform", "base64"],
+      "description": "Where the existing PDF comes from for edit, extract, or analyze."
+    },
+    "fileId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 80,
+      "description": "Workspace fileId returned by a previous pdf create/edit."
+    },
+    "platformFileId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 120,
+      "description": "Chat attachment fileId when the user attached a PDF."
+    },
+    "pdfBase64": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 800000,
+      "description": "Raw PDF bytes as standard base64 when the file cannot be downloaded from chat."
+    }
+  }
+}

@@ -108,6 +108,59 @@ export async function downloadPlatformFile(
   };
 }
 
+export async function downloadPlatformPdf(
+  invocationToken: string,
+  platformFileId: string,
+  claims: InvocationClaims,
+  fileName?: string,
+  coreDelegationToken?: string,
+): Promise<{ fileName: string; mimeType: string; buffer: Buffer }> {
+  assertPlatformFileId(platformFileId);
+
+  const url = new URL(`/api/files/${encodeURIComponent(platformFileId)}/download`, coreOrigin);
+  const bearer = coreDelegationToken || invocationToken;
+  const response = await fetch(url, {
+    headers: {
+      authorization: `Bearer ${bearer}`,
+      accept: 'application/pdf, application/octet-stream, */*',
+      origin: webOriginFromCore(coreOrigin),
+      'x-org-id': claims.oid,
+      'x-ws-id': claims.wid,
+    },
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw new PlatformFileError(
+      401,
+      'PLATFORM_FILE_ERROR',
+      'Could not download the chat PDF. Pass pdfBase64, or a fileId from a previous pdf create/edit.',
+    );
+  }
+  if (!response.ok) {
+    throw new PlatformFileError(
+      response.status === 404 ? 400 : (response.status >= 400 && response.status < 500 ? response.status : 502),
+      'PLATFORM_FILE_ERROR',
+      `Could not download the chat PDF (HTTP ${response.status})`,
+    );
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.byteLength < 8 || buffer.byteLength > 1_500_000) {
+    throw new PlatformFileError(400, 'INVALID_INPUT', 'PDF must be between 8 bytes and 1.5 MB');
+  }
+  if (!buffer.subarray(0, 5).toString('utf8').startsWith('%PDF')) {
+    throw new PlatformFileError(400, 'INVALID_INPUT', 'Chat attachment is not a PDF');
+  }
+
+  const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'application/pdf';
+  return {
+    fileName: fileName || parseFilename(response.headers.get('content-disposition')) || `${platformFileId}.pdf`,
+    mimeType,
+    buffer,
+  };
+}
+
 function webOriginFromCore(origin: string): string {
   const fromEnv = process.env.SOTA_WEB_ORIGIN?.trim();
   if (fromEnv) return fromEnv;

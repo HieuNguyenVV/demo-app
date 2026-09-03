@@ -7,7 +7,8 @@ import { handleCountWords } from './tool.count-words.js';
 import { handleGenerateDrawio } from './tool.generate-drawio.js';
 import { handleGenerateFile } from './tool.generate-file.js';
 import { handleMeetingMinutes } from './tool.meeting-minutes.js';
-import { handleUploadFile, PlatformFileError } from './tool.upload-file.js';
+import { handlePdf, PlatformFileError } from './tool.pdf.js';
+import { handleUploadFile } from './tool.upload-file.js';
 import { InvalidToolInputError, isRecord } from './tool.shared.js';
 import type { InvocationClaims } from './sota-auth.js';
 import { requireSotaInvocation } from './sota-auth.js';
@@ -27,6 +28,12 @@ export function registerToolRoutes(app: Express, appId: string) {
 
   app.post('/tools/generate-drawio', requireSotaInvocation(appId, 'tool:generate-drawio'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleGenerateDrawio(input));
+  });
+
+  app.post('/tools/pdf', requireSotaInvocation(appId, 'tool:pdf'), async (request, response) => {
+    await respondWithTool(request, response, (input, claims, token) =>
+      handlePdf(input, claims, token, readCoreDelegationToken(request)),
+    );
   });
 
   app.post('/tools/upload-file', requireSotaInvocation(appId, 'tool:upload-file'), async (request, response) => {

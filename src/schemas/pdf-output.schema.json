@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action", "summary"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["create", "edit", "extract", "analyze"]
+    },
+    "fileName": { "type": "string", "maxLength": 100 },
+    "fileId": { "type": "string", "maxLength": 80 },
+    "docType": { "type": "string", "maxLength": 40 },
+    "mimeType": { "type": "string", "maxLength": 80 },
+    "contentEncoding": { "type": "string", "enum": ["base64"] },
+    "sizeBytes": { "type": "integer", "minimum": 1 },
+    "pageCount": { "type": "integer", "minimum": 0 },
+    "wordCount": { "type": "integer", "minimum": 0 },
+    "readingMinutes": { "type": "number" },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 400 },
+    "preview": { "type": "string", "maxLength": 2000 },
+    "extractedText": { "type": "string", "maxLength": 20000 },
+    "content": { "type": "string", "maxLength": 2000000 },
+    "topWords": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["word", "count"],
+        "properties": {
+          "word": { "type": "string" },
+          "count": { "type": "integer" }
+        }
+      }
+    },
+    "_sota": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelProjection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "omitKeys": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

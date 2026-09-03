@@ -23,6 +23,7 @@
   "tool.generateDrawio.running": "Building draw.io file…",
   "tool.generateDrawio.denied": "Diagram generation was not approved.",
   "tool.generateDrawio.error": "Could not generate the draw.io file.",
+  "tool.pdf.title": "Office PDF",
   "tool.uploadFile.title": "Uploaded file",
   "tool.analyzeFile.title": "File analysis"
 }
