@@ -25,7 +25,9 @@ export function registerToolRoutes(app: Express, appId: string) {
   });
 
   app.post('/tools/upload-file', requireSotaInvocation(appId, 'tool:upload-file'), async (request, response) => {
-    await respondWithTool(request, response, (input, claims, token) => handleUploadFile(input, claims, token));
+    await respondWithTool(request, response, (input, claims, token) =>
+      handleUploadFile(input, claims, token, readCoreDelegationToken(request)),
+    );
   });
 
   app.post('/tools/analyze-file', requireSotaInvocation(appId, 'tool:analyze-file'), async (request, response) => {
@@ -70,4 +72,9 @@ async function respondWithTool(
 
 function readBearerToken(request: express.Request): string | undefined {
   return /^Bearer\s+(.+)$/i.exec(request.header('authorization') ?? '')?.[1];
+}
+
+function readCoreDelegationToken(request: express.Request): string | undefined {
+  const value = request.header('x-sota-core-token')?.trim();
+  return value && value.length > 0 ? value : undefined;
 }

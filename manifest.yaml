@@ -167,9 +167,9 @@ contributes:
         export: MeetingMinutesResult
         styles: dist/ui/app.css
 service:
-  baseUrl: https://my-app.invalid
+  baseUrl: https://api.viet.it.com
 health:
-  url: https://my-app.invalid/health
+  url: https://api.viet.it.com/health
   intervalSeconds: 60
 environments:
   local:

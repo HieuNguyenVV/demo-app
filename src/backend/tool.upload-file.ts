@@ -27,8 +27,9 @@ export async function handleUploadFile(
   input: unknown,
   claims: InvocationClaims,
   invocationToken: string,
+  coreDelegationToken?: string,
 ): Promise<UploadFileResult> {
-  const parsed = await parseInput(input, invocationToken);
+  const parsed = await parseInput(input, invocationToken, coreDelegationToken);
   const record = saveUploadedFile(claims, parsed.fileName, parsed.mimeType, parsed.content);
   return {
     source: parsed.source,
@@ -40,7 +41,7 @@ export async function handleUploadFile(
   };
 }
 
-async function parseInput(input: unknown, invocationToken: string) {
+async function parseInput(input: unknown, invocationToken: string, coreDelegationToken?: string) {
   if (!isRecord(input)) {
     throw new InvalidToolInputError('input must be an object');
   }
@@ -58,6 +59,7 @@ async function parseInput(input: unknown, invocationToken: string) {
       invocationToken,
       input.platformFileId,
       typeof input.fileName === 'string' ? input.fileName : undefined,
+      coreDelegationToken,
     );
 
     return {

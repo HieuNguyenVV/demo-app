@@ -14,7 +14,12 @@ export function registerFileRoutes(app: Express, appId: string) {
     }
 
     try {
-      response.json(await handleUploadFile(request.body, response.locals.sota, token));
+      response.json(await handleUploadFile(
+        request.body,
+        response.locals.sota,
+        token,
+        request.header('x-sota-core-token')?.trim() || undefined,
+      ));
     } catch (error) {
       respondWithError(response, error);
     }

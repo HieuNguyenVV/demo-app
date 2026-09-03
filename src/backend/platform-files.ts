@@ -32,24 +32,40 @@ export async function downloadPlatformFile(
   invocationToken: string,
   platformFileId: string,
   fileName?: string,
+  coreDelegationToken?: string,
 ): Promise<PlatformFileContent> {
   assertPlatformFileId(platformFileId);
 
   const url = new URL(`/api/v1/files/${encodeURIComponent(platformFileId)}/download`, coreOrigin);
   const response = await fetch(url, {
     headers: {
-      authorization: `Bearer ${invocationToken}`,
+      authorization: `Bearer ${coreDelegationToken || invocationToken}`,
       accept: 'text/plain, text/csv, text/markdown, application/json, */*',
     },
     signal: AbortSignal.timeout(10000),
   });
 
+  if (!response.ok) {
+    console.error(JSON.stringify({
+      event: 'platform_file_download_failed',
+      platformFileId,
+      coreStatus: response.status,
+      coreHost: url.host,
+      usedDelegationToken: Boolean(coreDelegationToken),
+    }));
+  }
+
   if (response.status === 404) {
-    throw new PlatformFileError(404, 'FILE_NOT_FOUND', 'Chat attachment was not found or is not accessible');
+    // Do not use HTTP 404 on the tool route — Core treats that as "endpoint missing".
+    throw new PlatformFileError(
+      400,
+      'FILE_NOT_FOUND',
+      'Chat attachment was not found or is not accessible. Pass the chat attachment fileId as platformFileId with source "platform", or use source "content" with the full text.',
+    );
   }
   if (!response.ok) {
     throw new PlatformFileError(
-      response.status,
+      response.status >= 400 && response.status < 500 ? response.status : 502,
       'PLATFORM_FILE_ERROR',
       `Could not download chat attachment (HTTP ${response.status})`,
     );
