@@ -8,7 +8,7 @@ export type InvocationClaims = JWTPayload & {
   scp: string[];
 };
 
-const coreOrigin = new URL(process.env.SOTA_CORE_ORIGIN ?? 'https://api.v4.stg.sotaagents.ai');
+const coreOrigin = new URL(process.env.SOTA_CORE_ORIGIN ?? 'https://api.v4.sotaagents.ai');
 const jwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', coreOrigin));
 
 export function requireSotaInvocation(appId: string, scope: string): RequestHandler {

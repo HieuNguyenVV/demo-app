@@ -1,6 +1,6 @@
 import type { InvocationClaims } from './sota-auth.js';
 
-const coreOrigin = process.env.SOTA_CORE_ORIGIN ?? 'https://api.v4.stg.sotaagents.ai';
+const coreOrigin = process.env.SOTA_CORE_ORIGIN ?? 'https://api.v4.sotaagents.ai';
 const MAX_PLATFORM_FILE_BYTES = 20000;
 const PLATFORM_FILE_ID_PATTERN = /^[A-Za-z0-9._-]{8,120}$/;
 
@@ -112,6 +112,12 @@ function webOriginFromCore(origin: string): string {
   const fromEnv = process.env.SOTA_WEB_ORIGIN?.trim();
   if (fromEnv) return fromEnv;
   const url = new URL(origin);
+  if (url.hostname === 'api.v4.sotaagents.ai') {
+    return 'https://app.sotaagents.ai';
+  }
+  if (url.hostname === 'api.v4.stg.sotaagents.ai') {
+    return 'https://v4.stg.sotaagents.ai';
+  }
   url.hostname = url.hostname.replace(/^api\./, '');
   return url.origin;
 }
