@@ -1,0 +1,87 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fileName", "nodes", "edges"],
+  "properties": {
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "description": "Base file name without extension, for example checkout-flow."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 80,
+      "description": "Optional diagram page name shown in draw.io."
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["top-down", "left-right"],
+      "description": "Layout direction. Default top-down for flowcharts."
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 40,
+      "description": "Boxes on the diagram. ids must be unique and match edge from/to.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "description": "Stable node id, for example start or payment."
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Text shown inside the shape."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["process", "decision", "start", "end", "data"],
+            "description": "Shape style. Default process."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 80,
+      "description": "Connectors between node ids.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "description": "Source node id."
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "description": "Target node id."
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Optional connector label, for example yes or no."
+          }
+        }
+      }
+    }
+  }
+}

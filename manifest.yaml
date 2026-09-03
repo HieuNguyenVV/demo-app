@@ -1,8 +1,8 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.1
+version: 1.0.2
 displayName: Inkline
-description: Analyze text and files, generate downloads, and turn messy notes into meeting minutes.
+description: Analyze text and files, generate downloads, create draw.io diagrams, and turn messy notes into meeting minutes.
 publisher:
   id: local-dev
   displayName: "Local Dev"
@@ -25,6 +25,12 @@ contributes:
       description: When to call generate-file to create downloadable txt, md, json, csv, or pdf files.
       appendsTo: system
       content: src/skills/generate-file
+      timeoutMs: 3000
+      failure_mode: skip
+    - name: generate-drawio
+      description: When the user wants a draw.io / diagrams.net flowchart, architecture, or process diagram, call generate-drawio instead of generate-file.
+      appendsTo: system
+      content: src/skills/generate-drawio
       timeoutMs: 3000
       failure_mode: skip
     - name: analyze-file
@@ -55,10 +61,17 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: generate-file
-      description: Generate a downloadable txt, md, json, csv, or pdf file from provided content. Use when the user asks to create, export, or save a file. Returns fileName, sizeBytes, lineCount, and file content for the UI download card. Use valid JSON for json, comma-separated rows for csv, and plain text for pdf.
+      description: Generate a downloadable txt, md, json, csv, or pdf file from provided content. Use when the user asks to create, export, or save those formats. Do not use for draw.io diagrams — call generate-drawio instead. Returns fileName, sizeBytes, lineCount, and file content for the UI download card. Use valid JSON for json, comma-separated rows for csv, and plain text for pdf.
       route: POST /tools/generate-file
       inputSchema: src/schemas/generate-file-input.schema.json
       outputSchema: src/schemas/generate-file-output.schema.json
+      timeoutMs: 15000
+      failure_mode: abort
+    - name: generate-drawio
+      description: Generate a downloadable draw.io (.drawio) diagram from nodes and edges. Use when the user wants a flowchart, architecture, process, or diagrams.net file they can open and edit. Do not use generate-file for this. Returns fileName, nodeCount, edgeCount, and XML content for the UI download card.
+      route: POST /tools/generate-drawio
+      inputSchema: src/schemas/generate-drawio-input.schema.json
+      outputSchema: src/schemas/generate-drawio-output.schema.json
       timeoutMs: 15000
       failure_mode: abort
     - name: upload-file
@@ -129,6 +142,18 @@ contributes:
       module:
         entry: dist/ui/app.js
         export: GenerateFileResult
+        styles: dist/ui/app.css
+    - id: generate-drawio-result
+      kind: nativeModule
+      surface: tool-view
+      slot: chat.message.inline.below
+      label: Draw.io diagram
+      toolNames:
+        - generate-drawio
+      renderBeforeOutput: true
+      module:
+        entry: dist/ui/app.js
+        export: GenerateDrawioResult
         styles: dist/ui/app.css
     - id: upload-file-result
       kind: nativeModule

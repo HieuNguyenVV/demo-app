@@ -50,6 +50,26 @@ type GenerateFileOutput = {
   content: string;
 };
 
+type GenerateDrawioInput = {
+  fileName: string;
+  title?: string;
+  direction?: 'top-down' | 'left-right';
+  nodes: Array<{ id: string; label: string; kind?: 'process' | 'decision' | 'start' | 'end' | 'data' }>;
+  edges: Array<{ from: string; to: string; label?: string }>;
+};
+
+type GenerateDrawioOutput = {
+  fileName: string;
+  format: 'drawio';
+  mimeType: string;
+  contentEncoding: 'text';
+  sizeBytes: number;
+  nodeCount: number;
+  edgeCount: number;
+  summary: string;
+  content: string;
+};
+
 type UploadFileInput = {
   source: 'content' | 'platform';
   platformFileId?: string;
@@ -329,6 +349,65 @@ export function GenerateFileResult({
   );
 }
 
+export function GenerateDrawioResult({
+  toolResult,
+}: ToolResultSurfaceProps<GenerateDrawioInput, GenerateDrawioOutput>) {
+  if (toolResult.state === 'input-streaming') {
+    return (
+      <ToolCard status="Preparing diagram…" busy>
+        <DrawioInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (
+    toolResult.state === 'input-available' ||
+    toolResult.state === 'output-pending' ||
+    toolResult.state === 'approval-requested'
+  ) {
+    return (
+      <ToolCard status="Building draw.io file…" busy>
+        <DrawioInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (toolResult.state === 'output-denied') {
+    return <ToolCard status="Diagram generation was not approved." />;
+  }
+
+  if (toolResult.state === 'output-error') {
+    return <ToolCard status={toolResult.errorText ?? 'Could not generate the draw.io file.'} />;
+  }
+
+  if (toolResult.state !== 'output-available') return null;
+
+  const result = toolResult.result;
+  if (!result) return <ToolCard status="Could not generate the draw.io file." />;
+
+  return (
+    <ToolCard status="Draw.io diagram">
+      <div className="generate-header">
+        <span className="analyze-badge">DRAW.IO</span>
+        <span className="analyze-file">{result.fileName}</span>
+      </div>
+      <p className="analyze-summary">{result.summary}</p>
+      <dl className="generate-meta">
+        <div><dt>Shapes</dt><dd>{result.nodeCount}</dd></div>
+        <div><dt>Connectors</dt><dd>{result.edgeCount}</dd></div>
+        <div><dt>Size</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
+      </dl>
+      <p className="count-preview">Open the download in diagrams.net or the draw.io desktop app.</p>
+      <DownloadLink
+        fileName={result.fileName}
+        content={result.content}
+        contentEncoding={result.contentEncoding}
+        mimeType={result.mimeType}
+      />
+    </ToolCard>
+  );
+}
+
 export function UploadFileResult({
   toolResult,
 }: ToolResultSurfaceProps<UploadFileInput, UploadFileOutput>) {
@@ -563,6 +642,21 @@ function GenerateInputPreview({ input }: { input?: unknown }) {
   return <p className="count-preview">{fileName}.{format}</p>;
 }
 
+function DrawioInputPreview({ input }: { input?: unknown }) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return <p className="count-preview">Waiting for the model…</p>;
+  }
+  const record = input as Record<string, unknown>;
+  const fileName = typeof record.fileName === 'string' ? record.fileName : 'diagram';
+  const nodes = Array.isArray(record.nodes) ? record.nodes.length : 0;
+  const title = typeof record.title === 'string' ? record.title : undefined;
+  return (
+    <p className="count-preview">
+      {fileName}.drawio{title ? ` · ${title}` : ''}{nodes ? ` · ${nodes} shapes` : ''}
+    </p>
+  );
+}
+
 function UploadInputPreview({ input }: { input?: unknown }) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return <p className="count-preview">Waiting for the model…</p>;
@@ -661,6 +755,7 @@ export const surfaces = {
   CountWordsResult,
   AnalyzeTextResult,
   GenerateFileResult,
+  GenerateDrawioResult,
   UploadFileResult,
   AnalyzeFileResult,
   MeetingMinutesResult,

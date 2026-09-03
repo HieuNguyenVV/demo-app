@@ -18,6 +18,11 @@
   "tool.generateFile.running": "Generating file…",
   "tool.generateFile.denied": "File generation was not approved.",
   "tool.generateFile.error": "Could not generate file.",
+  "tool.generateDrawio.title": "Draw.io diagram",
+  "tool.generateDrawio.streaming": "Preparing diagram…",
+  "tool.generateDrawio.running": "Building draw.io file…",
+  "tool.generateDrawio.denied": "Diagram generation was not approved.",
+  "tool.generateDrawio.error": "Could not generate the draw.io file.",
   "tool.uploadFile.title": "Uploaded file",
   "tool.analyzeFile.title": "File analysis"
 }

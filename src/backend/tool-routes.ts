@@ -4,6 +4,7 @@ import { FileNotFoundError } from './file-store.js';
 import { handleAnalyzeFile } from './tool.analyze-file.js';
 import { handleAnalyzeText } from './tool.analyze-text.js';
 import { handleCountWords } from './tool.count-words.js';
+import { handleGenerateDrawio } from './tool.generate-drawio.js';
 import { handleGenerateFile } from './tool.generate-file.js';
 import { handleMeetingMinutes } from './tool.meeting-minutes.js';
 import { handleUploadFile, PlatformFileError } from './tool.upload-file.js';
@@ -22,6 +23,10 @@ export function registerToolRoutes(app: Express, appId: string) {
 
   app.post('/tools/generate-file', requireSotaInvocation(appId, 'tool:generate-file'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleGenerateFile(input));
+  });
+
+  app.post('/tools/generate-drawio', requireSotaInvocation(appId, 'tool:generate-drawio'), async (request, response) => {
+    await respondWithTool(request, response, (input) => handleGenerateDrawio(input));
   });
 
   app.post('/tools/upload-file', requireSotaInvocation(appId, 'tool:upload-file'), async (request, response) => {

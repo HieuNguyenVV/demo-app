@@ -5,7 +5,9 @@ description: Use when the user wants a downloadable txt, md, json, csv, or pdf f
 
 # Generate file
 
-Call `generate-file` when the user asks to create, export, or download a file.
+Call `generate-file` when the user asks to create, export, or download a txt, md, json, csv, or pdf file.
+
+Do not use this tool for draw.io / diagrams.net diagrams. Call `generate-drawio` instead.
 
 ## Input rules
 
