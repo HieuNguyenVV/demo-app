@@ -1,3 +1,5 @@
+import type { InvocationClaims } from './sota-auth.js';
+
 const coreOrigin = process.env.SOTA_CORE_ORIGIN ?? 'https://api.v4.stg.sotaagents.ai';
 const MAX_PLATFORM_FILE_BYTES = 20000;
 const PLATFORM_FILE_ID_PATTERN = /^[A-Za-z0-9._-]{8,120}$/;
@@ -31,16 +33,21 @@ export function assertPlatformFileId(fileId: string) {
 export async function downloadPlatformFile(
   invocationToken: string,
   platformFileId: string,
+  claims: InvocationClaims,
   fileName?: string,
   coreDelegationToken?: string,
 ): Promise<PlatformFileContent> {
   assertPlatformFileId(platformFileId);
 
-  const url = new URL(`/api/files/${encodeURIComponent(platformFileId)}/inline`, coreOrigin);
+  const url = new URL(`/api/files/${encodeURIComponent(platformFileId)}/download`, coreOrigin);
+  const bearer = coreDelegationToken || invocationToken;
   const response = await fetch(url, {
     headers: {
-      authorization: `Bearer ${coreDelegationToken || invocationToken}`,
-      accept: 'text/plain, text/csv, text/markdown, application/json, */*',
+      authorization: `Bearer ${bearer}`,
+      accept: 'application/json, text/plain, */*',
+      origin: webOriginFromCore(coreOrigin),
+      'x-org-id': claims.oid,
+      'x-ws-id': claims.wid,
     },
     signal: AbortSignal.timeout(10000),
   });
@@ -56,8 +63,14 @@ export async function downloadPlatformFile(
     }));
   }
 
+  if (response.status === 401 || response.status === 403) {
+    throw new PlatformFileError(
+      401,
+      'PLATFORM_FILE_ERROR',
+      'Core rejected the app credential for /api/files/{id}/download. That route expects a user session in the browser, not the app invocation JWT.',
+    );
+  }
   if (response.status === 404) {
-    // Do not use HTTP 404 on the tool route — Core treats that as "endpoint missing".
     throw new PlatformFileError(
       400,
       'FILE_NOT_FOUND',
@@ -93,6 +106,14 @@ export async function downloadPlatformFile(
     sizeBytes: buffer.byteLength,
     content: buffer.toString('utf8'),
   };
+}
+
+function webOriginFromCore(origin: string): string {
+  const fromEnv = process.env.SOTA_WEB_ORIGIN?.trim();
+  if (fromEnv) return fromEnv;
+  const url = new URL(origin);
+  url.hostname = url.hostname.replace(/^api\./, '');
+  return url.origin;
 }
 
 function isSupportedTextMime(mimeType: string): boolean {

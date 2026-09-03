@@ -8,6 +8,7 @@ services:
       HOST: 0.0.0.0
       PORT: 8787
       SOTA_CORE_ORIGIN: https://api.v4.stg.sotaagents.ai
+      SOTA_WEB_ORIGIN: https://v4.stg.sotaagents.ai
     volumes:
       - uploads:/app/dist/backend/uploads
 

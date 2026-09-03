@@ -29,7 +29,7 @@ export async function handleUploadFile(
   invocationToken: string,
   coreDelegationToken?: string,
 ): Promise<UploadFileResult> {
-  const parsed = await parseInput(input, invocationToken, coreDelegationToken);
+  const parsed = await parseInput(input, claims, invocationToken, coreDelegationToken);
   const record = saveUploadedFile(claims, parsed.fileName, parsed.mimeType, parsed.content);
   return {
     source: parsed.source,
@@ -41,7 +41,12 @@ export async function handleUploadFile(
   };
 }
 
-async function parseInput(input: unknown, invocationToken: string, coreDelegationToken?: string) {
+async function parseInput(
+  input: unknown,
+  claims: InvocationClaims,
+  invocationToken: string,
+  coreDelegationToken?: string,
+) {
   if (!isRecord(input)) {
     throw new InvalidToolInputError('input must be an object');
   }
@@ -58,6 +63,7 @@ async function parseInput(input: unknown, invocationToken: string, coreDelegatio
     const downloaded = await downloadPlatformFile(
       invocationToken,
       input.platformFileId,
+      claims,
       typeof input.fileName === 'string' ? input.fileName : undefined,
       coreDelegationToken,
     );
