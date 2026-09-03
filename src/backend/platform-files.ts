@@ -36,7 +36,7 @@ export async function downloadPlatformFile(
 ): Promise<PlatformFileContent> {
   assertPlatformFileId(platformFileId);
 
-  const url = new URL(`/api/v1/files/${encodeURIComponent(platformFileId)}/download`, coreOrigin);
+  const url = new URL(`/api/files/${encodeURIComponent(platformFileId)}/inline`, coreOrigin);
   const response = await fetch(url, {
     headers: {
       authorization: `Bearer ${coreDelegationToken || invocationToken}`,
@@ -51,6 +51,7 @@ export async function downloadPlatformFile(
       platformFileId,
       coreStatus: response.status,
       coreHost: url.host,
+      corePath: url.pathname,
       usedDelegationToken: Boolean(coreDelegationToken),
     }));
   }
