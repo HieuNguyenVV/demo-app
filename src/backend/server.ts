@@ -6,7 +6,7 @@ import { registerFileRoutes } from './file-routes.js';
 import { registerTestRoutes } from './test-routes.js';
 import { registerToolRoutes } from './tool-routes.js';
 
-const appId = 'my-app';
+const appId = 'inkline';
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));

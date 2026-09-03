@@ -1,8 +1,8 @@
 manifestSchemaVersion: 3
-appId: my-app
+appId: inkline
 version: 1.0.1
-displayName: "My App"
-description: "SotaAgent app."
+displayName: Inkline
+description: Analyze text and files, generate downloads, and turn messy notes into meeting minutes.
 publisher:
   id: local-dev
   displayName: "Local Dev"
@@ -87,9 +87,9 @@ contributes:
       kind: nativeModule
       surface: page
       slot: admin.workspace.tab
-      sectionId: my-app
-      label: Admin screen
-      route: /my-app/*
+      sectionId: inkline
+      label: Inkline
+      route: /inkline/*
       module:
         entry: dist/ui/app.js
         export: AdminScreen

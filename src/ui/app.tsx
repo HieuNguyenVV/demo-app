@@ -135,9 +135,9 @@ export function AdminScreen() {
       .catch((error) => setMessage(`Backend error: ${String(error)}`));
   }, [appFetch]);
   return (
-    <main className="starter-root starter-page" data-sota-app="my-app">
-      <p className="starter-eyebrow">SotaAgent app</p>
-      <h1>Admin screen</h1>
+    <main className="starter-root starter-page" data-sota-app="inkline">
+      <p className="starter-eyebrow">Workspace toolkit</p>
+      <h1>Inkline</h1>
       <p className="starter-status">{message}</p>
       <p>Edit <code>src/ui/app.tsx</code>; Vite rebuilds into <code>dist/ui</code>.</p>
     </main>
@@ -527,7 +527,7 @@ function ToolCard({
   children?: ReactNode;
 }) {
   return (
-    <section className="starter-root starter-result" data-sota-app="my-app" aria-busy={busy || undefined}>
+    <section className="starter-root starter-result" data-sota-app="inkline" aria-busy={busy || undefined}>
       <strong>{status}</strong>
       {children}
     </section>
