@@ -59,6 +59,10 @@ export async function handlePdf(
     }
   }
 
+  if (parsed.source === 'platform' && parsed.content) {
+    return handleVisibleAttachment(claims, parsed);
+  }
+
   const source = await loadPdf(parsed, claims, invocationToken, coreDelegationToken);
   if (parsed.action === 'edit') {
     try {
@@ -156,6 +160,14 @@ async function loadPdf(
     return { fileName: `${parsed.fileName}.pdf`, buffer };
   }
 
+  if (parsed.source === 'platform' && parsed.pdfBase64) {
+    const buffer = Buffer.from(parsed.pdfBase64, 'base64');
+    if (buffer.byteLength < 8 || !buffer.subarray(0, 5).toString('utf8').startsWith('%PDF')) {
+      throw new InvalidToolInputError('pdfBase64 must be a real PDF');
+    }
+    return { fileName: `${parsed.fileName}.pdf`, buffer };
+  }
+
   return downloadPlatformPdf(
     invocationToken,
     parsed.platformFileId,
@@ -198,6 +210,7 @@ function parseInput(input: unknown) {
       fileId: '',
       platformFileId: '',
       pdfBase64: '',
+      content: '',
     };
   }
 
@@ -218,15 +231,89 @@ function parseInput(input: unknown) {
     pageStart: optionalInt(input.pageStart, 'pageStart'),
     pageEnd: optionalInt(input.pageEnd, 'pageEnd'),
     ...source,
+    content: parseAttachmentContent(input.content),
   };
+}
+
+function parseAttachmentContent(value: unknown): string {
+  if (value === undefined) return '';
+  if (typeof value !== 'string' || value.trim().length < 1 || value.length > 20000) {
+    throw new InvalidToolInputError('content must be between 1 and 20000 characters');
+  }
+  return value;
+}
+
+function textStats(text: string) {
+  const trimmed = text.trim();
+  return {
+    preview: trimmed.slice(0, 500),
+    extractedText: trimmed.slice(0, 20000),
+    wordCount: trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0,
+  };
+}
+
+async function handleVisibleAttachment(
+  claims: InvocationClaims,
+  parsed: ReturnType<typeof parseInput>,
+): Promise<PdfToolResult> {
+  const fileName = parsed.fileName === 'document' ? 'chat-attachment' : parsed.fileName;
+  if (parsed.action === 'extract') {
+    const stats = textStats(parsed.content);
+    return {
+      action: 'extract',
+      fileName: `${fileName}.pdf`,
+      pageCount: 1,
+      wordCount: stats.wordCount,
+      preview: stats.preview,
+      extractedText: stats.extractedText,
+      summary: `Extracted visible text from chat PDF ${fileName}.pdf (Core file download skipped).`,
+      _sota: { modelProjection: { omitKeys: ['content'] } },
+    };
+  }
+
+  if (parsed.action === 'analyze') {
+    const analysis = analyzeTextContent(parsed.content, 8);
+    return {
+      action: 'analyze',
+      fileName: `${fileName}.pdf`,
+      pageCount: 1,
+      wordCount: analysis.wordCount,
+      readingMinutes: analysis.readingMinutes,
+      preview: analysis.preview,
+      extractedText: parsed.content.slice(0, 20000),
+      topWords: analysis.topWords,
+      summary: `${fileName}.pdf (from chat text): ${analysis.summary}. Ready for a meeting brief.`,
+      _sota: { modelProjection: { omitKeys: ['content'] } },
+    };
+  }
+
+  if (parsed.editMode === 'page-range') {
+    throw new InvalidToolInputError(
+      'page-range needs the original PDF bytes (source file + fileId). For a chat attachment, use stamp, cover-page, or append-page and pass the full attachment text in content.',
+    );
+  }
+
+  const rebuilt = await createOfficePdf({
+    title: parsed.title || fileName,
+    docType: parsed.docType,
+    body: parsed.content,
+  });
+  const edited = await editOfficePdf(rebuilt, parsed.editMode, {
+    text: parsed.text,
+    stampPosition: parsed.stampPosition,
+    title: parsed.title,
+  });
+  const result = finishPdf(claims, fileName, 'edit', parsed.docType, edited);
+  result.summary = `Rebuilt chat PDF ${result.fileName} from visible text, then applied ${parsed.editMode}. Download the card under the message.`;
+  return result;
 }
 
 function parseFileName(value: unknown, action: PdfAction): string {
   if (typeof value === 'string' && FILE_NAME_PATTERN.test(value)) {
     return value.replace(/\.pdf$/i, '');
   }
-  if (action === 'create' || action === 'edit') {
-    throw new InvalidToolInputError('fileName is required for create and edit');
+  if (action === 'create') {
+    throw new InvalidToolInputError('fileName is required for create');
   }
   return 'document';
 }
@@ -267,7 +354,8 @@ function parseSource(input: Record<string, unknown>) {
     if (typeof input.platformFileId !== 'string' || input.platformFileId.length < 8) {
       throw new InvalidToolInputError('platformFileId is required when source is platform');
     }
-    return { source: 'platform' as const, fileId: '', platformFileId: input.platformFileId, pdfBase64: '' };
+    const pdfBase64 = typeof input.pdfBase64 === 'string' ? input.pdfBase64 : '';
+    return { source: 'platform' as const, fileId: '', platformFileId: input.platformFileId, pdfBase64 };
   }
   if (source === 'base64') {
     if (typeof input.pdfBase64 !== 'string' || input.pdfBase64.length < 32) {

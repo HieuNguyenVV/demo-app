@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.3
+version: 1.0.5
 displayName: Inkline
 description: "Office toolkit for PDFs, draw.io diagrams, meeting minutes, and text analysis."
 publisher:
@@ -34,7 +34,7 @@ contributes:
       timeoutMs: 3000
       failure_mode: skip
     - name: analyze-file
-      description: When the user attached a chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically call upload-file then analyze-file without waiting for the user to say upload.
+      description: When the user attached a non-PDF chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically call upload-file then analyze-file. For PDF attachments use the pdf tool instead.
       appendsTo: system
       content: src/skills/analyze-file
       timeoutMs: 3000
@@ -46,19 +46,19 @@ contributes:
       timeoutMs: 3000
       failure_mode: skip
     - name: pdf-edit
-      description: When an office worker needs to stamp, add a cover or notes page, or keep a page range of a PDF, call pdf with action edit.
+      description: When the user attached a chat PDF and asks to stamp, add a cover or notes, or otherwise edit it, call pdf with action edit, source platform, platformFileId, fileName, and the full visible attachment text in content. Also use this for PDFs this app already created via fileId.
       appendsTo: system
       content: src/skills/pdf-edit
       timeoutMs: 3000
       failure_mode: skip
     - name: pdf-extract
-      description: When an office worker needs text copied out of a PDF into email or Word, call pdf with action extract.
+      description: When the user attached a chat PDF and asks to copy or extract its text, call pdf with action extract, source platform, platformFileId, fileName, and the full visible attachment text in content.
       appendsTo: system
       content: src/skills/pdf-extract
       timeoutMs: 3000
       failure_mode: skip
     - name: pdf-analyze
-      description: When an office worker needs a short brief of a PDF before a meeting or forwarding to a manager, call pdf with action analyze.
+      description: When the user attached a chat PDF and asks to analyze, summarize, or brief it, call pdf with action analyze, source platform, platformFileId, fileName, and the full visible attachment text in content. Do not use upload-file for PDFs.
       appendsTo: system
       content: src/skills/pdf-analyze
       timeoutMs: 3000
@@ -99,14 +99,14 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: pdf
-      description: Office PDF desk. Create a memo/report/letter/minutes/proposal PDF; stamp or split an existing PDF; extract text for email/Word; or summarize a PDF before a meeting. Use when the user mentions công văn, báo cáo, tờ trình, PDF, stamp, tách trang, lấy chữ, or tóm tắt file PDF. Do not use generate-file for these jobs. Returns a downloadable PDF for create/edit, or pageCount/preview/extractedText for extract/analyze.
+      description: Office PDF desk. Create, stamp/split, extract, or summarize. When the user attached a chat PDF, set source to platform, pass platformFileId, fileName, and the full attachment text in content when it is visible (same workaround as upload-file). Prefer fileId for a PDF this app already created. Do not use generate-file for these jobs.
       route: POST /tools/pdf
       inputSchema: src/schemas/pdf-input.schema.json
       outputSchema: src/schemas/pdf-output.schema.json
       timeoutMs: 20000
       failure_mode: abort
     - name: upload-file
-      description: Internal step 1 for reading user files. Call automatically when the user attached a chat file and wants it read or analyzed. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, pass fileName such as todo.txt, and pass the full attachment text in content when it is visible in the conversation. With pasted text only, set source to content and pass the full content body.
+      description: Internal step 1 for reading user text files. Call automatically when the user attached a non-PDF chat file and wants it read or analyzed. Do not use for PDF attachments — call pdf instead. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, pass fileName such as todo.txt, and pass the full attachment text in content when it is visible in the conversation. With pasted text only, set source to content and pass the full content body.
       route: POST /tools/upload-file
       inputSchema: src/schemas/upload-file-input.schema.json
       outputSchema: src/schemas/upload-file-output.schema.json

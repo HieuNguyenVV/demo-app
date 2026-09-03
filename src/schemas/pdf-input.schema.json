@@ -38,7 +38,13 @@
     "text": {
       "type": "string",
       "maxLength": 12000,
-      "description": "Body of a created PDF, addendum/cover text, or stamp label such as MAT or COPY."
+      "description": "Create body, stamp label (MAT, COPY), or cover/addendum wording."
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000,
+      "description": "Full chat-attachment text when it is visible in the conversation. Required for source platform because the app cannot download the PDF from Core. Pass the full text; do not summarize."
     },
     "signer": {
       "type": "string",

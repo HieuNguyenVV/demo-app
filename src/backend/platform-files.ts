@@ -132,9 +132,9 @@ export async function downloadPlatformPdf(
 
   if (response.status === 401 || response.status === 403) {
     throw new PlatformFileError(
-      401,
+      400,
       'PLATFORM_FILE_ERROR',
-      'Could not download the chat PDF. Pass pdfBase64, or a fileId from a previous pdf create/edit.',
+      'Core cannot download the chat PDF (no user session on the app). Retry pdf with source "platform", platformFileId, fileName, and the full attachment text in content — same workaround as upload-file.',
     );
   }
   if (!response.ok) {

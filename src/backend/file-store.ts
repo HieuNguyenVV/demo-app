@@ -70,31 +70,14 @@ export function readUploadedFile(claims: InvocationClaims, fileId: string): {
   record: StoredFileRecord;
   content: string;
 } {
-  if (!FILE_ID_PATTERN.test(fileId)) {
+  const { envelope, dir } = readEnvelope(claims, fileId);
+  const textPath = join(dir, `${fileId}.txt`);
+  if (!existsSync(textPath)) {
     throw new FileNotFoundError();
   }
-
-  const dir = tenantDir(claims);
-  const metaPath = join(dir, `${fileId}.json`);
-  if (!existsSync(metaPath)) {
-    throw new FileNotFoundError();
-  }
-
-  const envelope = JSON.parse(readFileSync(metaPath, 'utf8')) as StoredFileEnvelope;
-  if (envelope.iid !== claims.iid || envelope.oid !== claims.oid || envelope.wid !== claims.wid) {
-    throw new FileNotFoundError();
-  }
-
   return {
-    record: {
-      fileId: envelope.fileId,
-      fileName: envelope.fileName,
-      mimeType: envelope.mimeType,
-      sizeBytes: envelope.sizeBytes,
-      lineCount: envelope.lineCount,
-      createdAt: envelope.createdAt,
-    },
-    content: readFileSync(join(dir, `${fileId}.txt`), 'utf8'),
+    record: toRecord(envelope),
+    content: readFileSync(textPath, 'utf8'),
   };
 }
 
@@ -136,12 +119,48 @@ export function readBinaryFile(claims: InvocationClaims, fileId: string): {
   record: StoredFileRecord;
   buffer: Buffer;
 } {
-  const stored = readUploadedFile(claims, fileId);
-  const binPath = join(tenantDir(claims), `${fileId}.bin`);
+  const { envelope, dir } = readEnvelope(claims, fileId);
+  const binPath = join(dir, `${fileId}.bin`);
   if (existsSync(binPath)) {
-    return { record: stored.record, buffer: readFileSync(binPath) };
+    return { record: toRecord(envelope), buffer: readFileSync(binPath) };
   }
-  return { record: stored.record, buffer: Buffer.from(stored.content, 'utf8') };
+  const textPath = join(dir, `${fileId}.txt`);
+  if (existsSync(textPath)) {
+    return { record: toRecord(envelope), buffer: readFileSync(textPath) };
+  }
+  throw new FileNotFoundError();
+}
+
+function readEnvelope(claims: InvocationClaims, fileId: string): {
+  envelope: StoredFileEnvelope;
+  dir: string;
+} {
+  if (!FILE_ID_PATTERN.test(fileId)) {
+    throw new FileNotFoundError();
+  }
+
+  const dir = tenantDir(claims);
+  const metaPath = join(dir, `${fileId}.json`);
+  if (!existsSync(metaPath)) {
+    throw new FileNotFoundError();
+  }
+
+  const envelope = JSON.parse(readFileSync(metaPath, 'utf8')) as StoredFileEnvelope;
+  if (envelope.iid !== claims.iid || envelope.oid !== claims.oid || envelope.wid !== claims.wid) {
+    throw new FileNotFoundError();
+  }
+  return { envelope, dir };
+}
+
+function toRecord(envelope: StoredFileEnvelope): StoredFileRecord {
+  return {
+    fileId: envelope.fileId,
+    fileName: envelope.fileName,
+    mimeType: envelope.mimeType,
+    sizeBytes: envelope.sizeBytes,
+    lineCount: envelope.lineCount,
+    createdAt: envelope.createdAt,
+  };
 }
 
 function tenantDir(claims: Pick<InvocationClaims, 'iid' | 'oid' | 'wid'>): string {
