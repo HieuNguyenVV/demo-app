@@ -25,17 +25,19 @@ type Point = { x: number; y: number };
 type PlacedNode = DrawioNode & Point & Size;
 
 const FONT = 'Helvetica';
-const GAP = 56;
-const MARGIN = 48;
-const TITLE_HEIGHT = 44;
+const GAP_X = 88;
+const GAP_Y = 108;
+const LANE_GAP = 96;
+const MARGIN = 72;
+const TITLE_HEIGHT = 56;
 const GRID = 10;
 
 const KIND_SIZE: Record<DrawioNodeKind, Size> = {
-  process: { width: 180, height: 68 },
-  decision: { width: 140, height: 140 },
-  start: { width: 150, height: 52 },
-  end: { width: 150, height: 52 },
-  data: { width: 170, height: 64 },
+  process: { width: 220, height: 78 },
+  decision: { width: 168, height: 168 },
+  start: { width: 188, height: 60 },
+  end: { width: 188, height: 60 },
+  data: { width: 210, height: 74 },
 };
 
 const NODE_STYLES: Record<DrawioNodeKind, string> = {
@@ -45,15 +47,15 @@ const NODE_STYLES: Record<DrawioNodeKind, string> = {
     fillColor: '#DAE8FC',
     strokeColor: '#6C8EBF',
     fontColor: '#1A365D',
-    fontSize: 12,
-    spacing: 10,
+    fontSize: 14,
+    spacing: 12,
   }),
   decision: `rhombus;${styleParts({
     fillColor: '#FFF2CC',
     strokeColor: '#D6B656',
     fontColor: '#744210',
-    fontSize: 11,
-    spacing: 8,
+    fontSize: 13,
+    spacing: 10,
   })}`,
   start: styleParts({
     rounded: 1,
@@ -61,8 +63,8 @@ const NODE_STYLES: Record<DrawioNodeKind, string> = {
     fillColor: '#D5E8D4',
     strokeColor: '#82B366',
     fontColor: '#276749',
-    fontSize: 12,
-    spacing: 8,
+    fontSize: 14,
+    spacing: 10,
   }),
   end: styleParts({
     rounded: 1,
@@ -70,15 +72,15 @@ const NODE_STYLES: Record<DrawioNodeKind, string> = {
     fillColor: '#F8CECC',
     strokeColor: '#B85450',
     fontColor: '#9B2C2C',
-    fontSize: 12,
-    spacing: 8,
+    fontSize: 14,
+    spacing: 10,
   }),
   data: `shape=parallelogram;perimeter=parallelogramPerimeter;fixedSize=1;${styleParts({
     fillColor: '#E1D5E7',
     strokeColor: '#9673A6',
     fontColor: '#553C7B',
-    fontSize: 12,
-    spacing: 8,
+    fontSize: 14,
+    spacing: 10,
   })}`,
 };
 
@@ -100,8 +102,8 @@ const STROKE: Record<DrawioNodeKind, string> = {
 
 export function buildDrawioXml(diagram: DrawioDiagram): string {
   const placed = layoutDiagram(diagram);
-  const pageWidth = Math.max(1169, placed.width);
-  const pageHeight = Math.max(827, placed.height);
+  const pageWidth = placed.width;
+  const pageHeight = placed.height;
   const pageName = diagram.title || 'Page-1';
   const cells = [
     ...placed.nodes.map((node) => [
@@ -114,8 +116,8 @@ export function buildDrawioXml(diagram: DrawioDiagram): string {
 
   if (diagram.title.trim()) {
     cells.unshift([
-      `        <mxCell id="title" value="${escapeXml(diagram.title.trim())}" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=${FONT};fontSize=18;fontStyle=1;fontColor=#1A202C;spacing=4;" vertex="1" parent="1">`,
-      `          <mxGeometry x="${MARGIN}" y="16" width="${Math.max(320, pageWidth - MARGIN * 2)}" height="28" as="geometry"/>`,
+      `        <mxCell id="title" value="${escapeXml(diagram.title.trim())}" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=${FONT};fontSize=22;fontStyle=1;fontColor=#1A202C;spacing=4;" vertex="1" parent="1">`,
+      `          <mxGeometry x="${MARGIN}" y="20" width="${Math.max(240, pageWidth - MARGIN * 2)}" height="32" as="geometry"/>`,
       '        </mxCell>',
     ].join('\n'));
   }
@@ -142,13 +144,13 @@ export function buildDrawioPreviewSvg(diagram: DrawioDiagram): string {
   const height = Math.max(180, placed.height);
   const nodeById = new Map(placed.nodes.map((node) => [node.id, node]));
   const title = diagram.title.trim()
-    ? `<text x="${MARGIN}" y="34" font-family="${FONT}" font-size="16" font-weight="700" fill="#1A202C">${escapeXml(diagram.title.trim())}</text>`
+    ? `<text x="${placed.width / 2}" y="40" text-anchor="middle" font-family="${FONT}" font-size="20" font-weight="700" fill="#1A202C">${escapeXml(diagram.title.trim())}</text>`
     : '';
   const connectors = diagram.edges.map((edge) => {
     const from = nodeById.get(edge.from);
     const to = nodeById.get(edge.to);
     if (!from || !to) return '';
-    const ports = edgePorts(from, to, edge.label, diagram.direction);
+    const ports = edgePorts(from, to, diagram.direction);
     const x1 = from.x + from.width * ports.exitX;
     const y1 = from.y + from.height * ports.exitY;
     const x2 = to.x + to.width * ports.entryX;
@@ -173,18 +175,178 @@ export function buildDrawioPreviewSvg(diagram: DrawioDiagram): string {
 }
 
 function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } {
+  if (diagram.direction === 'left-right') {
+    return layoutSugiyama(diagram, true);
+  }
+  return layoutFlowTopDown(diagram);
+}
+
+function layoutFlowTopDown(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } {
+  const layers = rankLayers(diagram);
+  const rankOf = new Map<string, number>();
+  layers.forEach((layer, index) => {
+    for (const id of layer) rankOf.set(id, index);
+  });
+  const spine = pickSpine(diagram, rankOf);
+  const laneOf = assignLanes(diagram, spine, rankOf);
+  const lanes = [...laneOf.values()];
+  const minLane = Math.min(0, ...lanes);
+  const maxLane = Math.max(0, ...lanes);
+  const colWidth = Math.max(...diagram.nodes.map((node) => nodeSize(node.kind).width)) + LANE_GAP;
+  const titleOffset = diagram.title.trim() ? TITLE_HEIGHT : 0;
+  const rowHeight = layers.map((layer) => Math.max(...layer.map((id) => {
+    const kind = diagram.nodes.find((node) => node.id === id)?.kind ?? 'process';
+    return nodeSize(kind).height;
+  })));
+  const rowY: number[] = [];
+  let y = MARGIN + titleOffset;
+  layers.forEach((layer, index) => {
+    rowY[index] = y;
+    const decisionPad = layer.some((id) => diagram.nodes.find((node) => node.id === id)?.kind === 'decision') ? 28 : 0;
+    y += rowHeight[index] + GAP_Y + decisionPad;
+  });
+
+  const placed: PlacedNode[] = diagram.nodes.map((node) => {
+    const size = nodeSize(node.kind);
+    const rank = rankOf.get(node.id) ?? 0;
+    const lane = laneOf.get(node.id) ?? 0;
+    const colX = MARGIN + (lane - minLane) * colWidth;
+    return {
+      ...node,
+      ...size,
+      x: snap(colX + (colWidth - LANE_GAP - size.width) / 2),
+      y: snap(rowY[rank] + (rowHeight[rank] - size.height) / 2),
+    };
+  });
+
+  return {
+    nodes: placed,
+    width: snap(MARGIN * 2 + (maxLane - minLane + 1) * colWidth - LANE_GAP),
+    height: snap(y - GAP_Y + MARGIN),
+  };
+}
+
+function pickSpine(diagram: DrawioDiagram, rankOf: Map<string, number>): Set<string> {
+  const children = new Map<string, DrawioEdge[]>(diagram.nodes.map((node) => [node.id, []]));
+  for (const edge of diagram.edges) {
+    if ((rankOf.get(edge.to) ?? 0) <= (rankOf.get(edge.from) ?? 0)) continue;
+    children.get(edge.from)?.push(edge);
+  }
+  for (const edges of children.values()) {
+    edges.sort((left, right) => edgePriority(right) - edgePriority(left));
+  }
+
+  const memo = new Map<string, string[]>();
+  const walk = (id: string, visiting: Set<string>): string[] => {
+    const cached = memo.get(id);
+    if (cached) return cached;
+    if (visiting.has(id)) return [id];
+    visiting.add(id);
+    let best = [id];
+    for (const edge of children.get(id) ?? []) {
+      const rest = walk(edge.to, visiting);
+      if (rest.length + 1 > best.length) best = [id, ...rest];
+    }
+    visiting.delete(id);
+    memo.set(id, best);
+    return best;
+  };
+
+  const starts = diagram.nodes.filter((node) => node.kind === 'start').map((node) => node.id);
+  const incomingForward = new Set(
+    diagram.edges
+      .filter((edge) => (rankOf.get(edge.to) ?? 0) > (rankOf.get(edge.from) ?? 0))
+      .map((edge) => edge.to),
+  );
+  const roots = starts.length > 0
+    ? starts
+    : diagram.nodes.map((node) => node.id).filter((id) => !incomingForward.has(id));
+  let best: string[] = [];
+  for (const root of (roots.length > 0 ? roots : diagram.nodes.slice(0, 1).map((node) => node.id))) {
+    const path = walk(root, new Set());
+    if (path.length > best.length) best = path;
+  }
+  return new Set(best);
+}
+
+function edgePriority(edge: DrawioEdge): number {
+  if (isPositive(edge.label) || !edge.label) return 2;
+  if (isNegative(edge.label)) return 0;
+  return 1;
+}
+
+function assignLanes(
+  diagram: DrawioDiagram,
+  spine: Set<string>,
+  rankOf: Map<string, number>,
+): Map<string, number> {
+  const lane = new Map<string, number>();
+  for (const id of spine) lane.set(id, 0);
+
+  const components: string[][] = [];
+  const seen = new Set<string>();
+  for (const node of diagram.nodes) {
+    if (spine.has(node.id) || seen.has(node.id)) continue;
+    const component: string[] = [];
+    const stack = [node.id];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current || seen.has(current) || spine.has(current)) continue;
+      seen.add(current);
+      component.push(current);
+      for (const edge of diagram.edges) {
+        if (edge.from === current && !spine.has(edge.to)) stack.push(edge.to);
+        if (edge.to === current && !spine.has(edge.from)) stack.push(edge.from);
+      }
+    }
+    if (component.length > 0) components.push(component);
+  }
+
+  components.sort((left, right) => (
+    Math.min(...left.map((id) => rankOf.get(id) ?? 0)) - Math.min(...right.map((id) => rankOf.get(id) ?? 0))
+  ));
+
+  let nextLeft = -1;
+  let nextRight = 1;
+  const leftPack: Array<{ lane: number; ranks: Set<number> }> = [];
+  const rightPack: Array<{ lane: number; ranks: Set<number> }> = [];
+
+  for (const component of components) {
+    const ranks = new Set(component.map((id) => rankOf.get(id) ?? 0));
+    const inbound = diagram.edges.filter((edge) => spine.has(edge.from) && component.includes(edge.to));
+    const pack = inbound.some((edge) => isNegative(edge.label)) ? leftPack : rightPack;
+    const existing = pack.find((slot) => ![...ranks].some((rank) => slot.ranks.has(rank)));
+    let assigned: number;
+    if (existing) {
+      assigned = existing.lane;
+      for (const rank of ranks) existing.ranks.add(rank);
+    } else {
+      assigned = inbound.some((edge) => isNegative(edge.label)) ? nextLeft-- : nextRight++;
+      pack.push({ lane: assigned, ranks });
+    }
+    for (const id of component) lane.set(id, assigned);
+  }
+
+  for (const node of diagram.nodes) {
+    if (!lane.has(node.id)) lane.set(node.id, 0);
+  }
+  return lane;
+}
+
+function layoutSugiyama(diagram: DrawioDiagram, horizontal: boolean): { nodes: PlacedNode[]; width: number; height: number } {
   const layers = orderLayers(rankLayers(diagram), diagram);
-  const horizontal = diagram.direction === 'left-right';
   const titleOffset = diagram.title.trim() ? TITLE_HEIGHT : 0;
   const layerSizes = layers.map((layer) => {
     const sizes = layer.map((id) => nodeSize(diagram.nodes.find((node) => node.id === id)?.kind ?? 'process'));
     const main = sizes.reduce((sum, size) => sum + (horizontal ? size.height : size.width), 0)
-      + GAP * Math.max(0, layer.length - 1);
+      + (horizontal ? GAP_Y : GAP_X) * Math.max(0, layer.length - 1);
     const cross = Math.max(...sizes.map((size) => (horizontal ? size.width : size.height)));
     return { main, cross, sizes };
   });
   const maxMain = Math.max(...layerSizes.map((layer) => layer.main), 0);
   const placed: PlacedNode[] = [];
+  const alongGap = horizontal ? GAP_X : GAP_Y;
+  const crossGap = horizontal ? GAP_Y : GAP_X;
 
   if (!horizontal) {
     let y = MARGIN + titleOffset;
@@ -196,14 +358,14 @@ function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: nu
         if (!node) return;
         const size = meta.sizes[index];
         placed.push({ ...node, ...size, x: snap(x), y: snap(y + (meta.cross - size.height) / 2) });
-        x += size.width + GAP;
+        x += size.width + crossGap;
       });
-      y += meta.cross + GAP;
+      y += meta.cross + alongGap;
     });
     return {
       nodes: placed,
       width: snap(MARGIN * 2 + maxMain),
-      height: snap(y - GAP + MARGIN),
+      height: snap(y - alongGap + MARGIN),
     };
   }
 
@@ -216,13 +378,13 @@ function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: nu
       if (!node) return;
       const size = meta.sizes[index];
       placed.push({ ...node, ...size, x: snap(x + (meta.cross - size.width) / 2), y: snap(y) });
-      y += size.height + GAP;
+      y += size.height + crossGap;
     });
-    x += meta.cross + GAP;
+    x += meta.cross + alongGap;
   });
   return {
     nodes: placed,
-    width: snap(x - GAP + MARGIN),
+    width: snap(x - alongGap + MARGIN),
     height: snap(MARGIN * 2 + titleOffset + maxMain),
   };
 }
@@ -322,51 +484,69 @@ function edgeCell(edge: DrawioEdge, index: number, diagram: DrawioDiagram, nodes
   const from = nodes.find((node) => node.id === edge.from);
   const to = nodes.find((node) => node.id === edge.to);
   const ports = from && to
-    ? edgePorts(from, to, edge.label, diagram.direction)
+    ? edgePorts(from, to, diagram.direction)
     : { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
+  const points = from && to ? routePoints(from, to, ports) : [];
   const label = edge.label ? ` value="${escapeXml(edge.label)}"` : '';
   const style = [
     'edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;',
-    'endArrow=block;endFill=1;strokeColor=#4A5568;strokeWidth=1.4;',
-    `fontFamily=${FONT};fontSize=11;fontColor=#2D3748;labelBackgroundColor=#FFFFFF;`,
+    'endArrow=block;endFill=1;strokeColor=#4A5568;strokeWidth=1.6;',
+    `fontFamily=${FONT};fontSize=12;fontColor=#2D3748;fontStyle=1;labelBackgroundColor=#FFFFFF;`,
     `exitX=${ports.exitX};exitY=${ports.exitY};exitDx=0;exitDy=0;`,
     `entryX=${ports.entryX};entryY=${ports.entryY};entryDx=0;entryDy=0;`,
   ].join('');
+  const geometry = points.length > 0
+    ? [
+      '          <mxGeometry relative="1" as="geometry">',
+      '            <Array as="points">',
+      ...points.map((point) => `              <mxPoint x="${point.x}" y="${point.y}"/>`),
+      '            </Array>',
+      '          </mxGeometry>',
+    ].join('\n')
+    : '          <mxGeometry relative="1" as="geometry"/>';
   return [
     `        <mxCell id="e-${index + 1}"${label} style="${style}" edge="1" parent="1" source="${escapeXml(cellId(edge.from))}" target="${escapeXml(cellId(edge.to))}">`,
-    '          <mxGeometry relative="1" as="geometry"/>',
+    geometry,
     '        </mxCell>',
   ].join('\n');
 }
 
-function edgePorts(
-  from: PlacedNode,
-  to: PlacedNode,
-  label: string | undefined,
-  direction: DrawioDirection,
-) {
-  const no = isNegative(label);
-  const yes = isPositive(label);
-  if (from.kind === 'decision' && (yes || no)) {
-    if (direction === 'top-down') {
-      return no
-        ? { exitX: 0, exitY: 0.5, entryX: 0.5, entryY: 0 }
-        : { exitX: 1, exitY: 0.5, entryX: 0.5, entryY: 0 };
-    }
-    return no
-      ? { exitX: 0.5, exitY: 0, entryX: 0, entryY: 0.5 }
-      : { exitX: 0.5, exitY: 1, entryX: 0, entryY: 0.5 };
-  }
+function edgePorts(from: PlacedNode, to: PlacedNode, direction: DrawioDirection) {
   if (direction === 'left-right') {
     if (to.x + to.width < from.x) return { exitX: 0, exitY: 0.5, entryX: 1, entryY: 0.5 };
+    if (to.y + to.height < from.y - 16) return { exitX: 0.5, exitY: 0, entryX: 0.5, entryY: 1 };
+    if (to.y > from.y + from.height + 16) return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
     return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
   }
-  if (to.y + to.height < from.y) return { exitX: 0.5, exitY: 0, entryX: 0.5, entryY: 1 };
+  if (to.y + to.height < from.y - 16) {
+    return { exitX: 0, exitY: 0.5, entryX: 0, entryY: 0.5 };
+  }
+  if (to.x + to.width < from.x - 24) {
+    return { exitX: 0, exitY: 0.5, entryX: 1, entryY: 0.5 };
+  }
+  if (to.x > from.x + from.width + 24) {
+    return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
+  }
   return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
 }
 
+function routePoints(
+  from: PlacedNode,
+  to: PlacedNode,
+  ports: { exitX: number; exitY: number; entryX: number; entryY: number },
+): Array<{ x: number; y: number }> {
+  if (to.y + to.height < from.y - 16 && Math.abs(from.x - to.x) < 30) {
+    const gutter = Math.min(from.x, to.x) - 48;
+    return [
+      { x: snap(gutter), y: snap(from.y + from.height * ports.exitY) },
+      { x: snap(gutter), y: snap(to.y + to.height * ports.entryY) },
+    ];
+  }
+  return [];
+}
+
 function wrapLabel(label: string, kind: DrawioNodeKind): string {
-  const maxLine = kind === 'decision' ? 12 : 22;
+  const maxLine = kind === 'decision' ? 14 : 26;
   const maxLines = kind === 'decision' ? 3 : 3;
   const words = label.trim().split(/\s+/);
   const lines: string[] = [];
@@ -466,10 +646,10 @@ function svgShape(node: PlacedNode): string {
 
 function svgLabel(node: PlacedNode): string {
   const lines = wrapLabel(node.label, node.kind).split('<br>').filter(Boolean);
-  const lineHeight = 14;
-  const start = node.y + node.height / 2 - ((lines.length - 1) * lineHeight) / 2 + 4;
+  const lineHeight = 16;
+  const start = node.y + node.height / 2 - ((lines.length - 1) * lineHeight) / 2 + 5;
   const spans = lines.map((line, index) => (
     `<tspan x="${node.x + node.width / 2}" y="${start + index * lineHeight}">${escapeXml(line)}</tspan>`
   )).join('');
-  return `<text text-anchor="middle" font-family="${FONT}" font-size="${node.kind === 'decision' ? 11 : 12}" fill="#1A202C">${spans}</text>`;
+  return `<text text-anchor="middle" font-family="${FONT}" font-size="${node.kind === 'decision' ? 13 : 14}" fill="#1A202C">${spans}</text>`;
 }
