@@ -8,7 +8,8 @@ description: Use when the user wants a downloadable txt, md, json, csv, or pdf f
 Call `generate-file` when the user asks to create, export, or download a txt, md, json, csv, or pdf file.
 
 Do not use this tool for draw.io / diagrams.net diagrams. Call `generate-drawio` for flowcharts and `generate-sequencediagram` for sequence diagrams.
-Do not use this tool for office PDFs (công văn, báo cáo, tờ trình). Call `pdf` with `action: create` instead. `format: pdf` here is only a plain-text printout.
+
+For a new PDF (including công văn, báo cáo, tờ trình, thư, biên bản), use this tool with `format: pdf`. Do not call the `pdf` tool to create a new file — that tool is for existing PDFs (stamp, extract, summarize).
 
 ## Input rules
 

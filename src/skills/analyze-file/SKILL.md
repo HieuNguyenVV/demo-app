@@ -7,7 +7,7 @@ description: When the user attached a non-PDF chat file or pasted file content a
 
 Use this workflow whenever the user wants to read or analyze a **text** file they provided (txt, md, csv, json).
 
-If the attachment is a **PDF**, do not call `upload-file` or this workflow. For a new office PDF, use `pdf` with `action: create`.
+If the attachment is a **PDF**, do not call `upload-file` or this workflow. Use the `pdf` tool to extract or summarize an attached PDF. To create a new PDF, call `generate-file` with `format: pdf`.
 
 The user does **not** need to say "upload". If they attached a non-PDF file and ask to read, analyze, summarize, review, or explain it — even briefly — run the full workflow immediately.
 
@@ -53,6 +53,6 @@ Do not paste the full `preview` unless the user explicitly asks for it.
 
 ## Do not use this workflow for
 
-- **PDF attachments** (`.pdf`) → do not use this workflow. For a new công văn / báo cáo PDF, call `pdf` with `action: create`.
+- **PDF attachments** (`.pdf`) → do not use this workflow. Call `pdf` to extract or summarize. To create a new PDF, call `generate-file` with `format: pdf`.
 - Creating export files → use `generate-file`.
 

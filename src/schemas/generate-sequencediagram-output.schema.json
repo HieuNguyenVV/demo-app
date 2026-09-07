@@ -7,16 +7,21 @@
     "mimeType",
     "contentEncoding",
     "sizeBytes",
+    "txtFileName",
+    "txtMimeType",
+    "txtSizeBytes",
     "participantCount",
     "messageCount",
     "summary",
-    "content"
+    "content",
+    "txtContent"
   ],
   "properties": {
     "fileName": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 100
+      "maxLength": 100,
+      "description": "Downloadable draw.io file name ending in .drawio."
     },
     "format": {
       "type": "string",
@@ -35,6 +40,21 @@
       "type": "integer",
       "minimum": 1
     },
+    "txtFileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Downloadable SequenceDiagram.org source file ending in .txt."
+    },
+    "txtMimeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "txtSizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
     "participantCount": {
       "type": "integer",
       "minimum": 2
@@ -46,12 +66,19 @@
     "summary": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 300
+      "maxLength": 400
     },
     "content": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 500000
+      "maxLength": 500000,
+      "description": "draw.io mxfile XML."
+    },
+    "txtContent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000,
+      "description": "SequenceDiagram.org source text."
     },
     "previewSvg": {
       "type": "string",

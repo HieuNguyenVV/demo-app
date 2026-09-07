@@ -1,11 +1,12 @@
-import { buildSequencePreviewSvg, buildSequenceXml, type SequenceMessageKind } from './sequence.js';
+import { buildSequencePreviewSvg, buildSequenceSourceText, buildSequenceXml, type SequenceMessageKind } from './sequence.js';
 import { asJsonArray, InvalidToolInputError, isRecord } from './tool.shared.js';
 
 const FILE_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
-const EXTENSIONS = /\.drawio$/i;
+const EXTENSIONS = /\.(txt|drawio)$/i;
 const KINDS = ['sync', 'async', 'return', 'self'] as const;
-const MIME_TYPE = 'application/vnd.jgraph.mxfile';
+const DRAWIO_MIME = 'application/vnd.jgraph.mxfile';
+const TXT_MIME = 'text/plain';
 const PREVIEW_CAP = 80000;
 
 export type GenerateSequenceDiagramResult = {
@@ -14,14 +15,18 @@ export type GenerateSequenceDiagramResult = {
   mimeType: string;
   contentEncoding: 'text';
   sizeBytes: number;
+  txtFileName: string;
+  txtMimeType: string;
+  txtSizeBytes: number;
   participantCount: number;
   messageCount: number;
   summary: string;
   content: string;
+  txtContent: string;
   previewSvg: string;
   _sota: {
     modelProjection: {
-      omitKeys: ['content', 'previewSvg'];
+      omitKeys: ['content', 'txtContent', 'previewSvg'];
     };
   };
 };
@@ -29,25 +34,30 @@ export type GenerateSequenceDiagramResult = {
 export function handleGenerateSequenceDiagram(input: unknown): GenerateSequenceDiagramResult {
   const parsed = parseInput(input);
   const content = buildSequenceXml(parsed);
+  const txtContent = buildSequenceSourceText(parsed);
   const preview = buildSequencePreviewSvg(parsed);
   const fileName = `${parsed.baseName}.drawio`;
-  const sizeBytes = Buffer.byteLength(content, 'utf8');
+  const txtFileName = `${parsed.baseName}.txt`;
   const previewSvg = preview.length <= PREVIEW_CAP ? preview : '';
 
   return {
     fileName,
     format: 'drawio',
-    mimeType: MIME_TYPE,
+    mimeType: DRAWIO_MIME,
     contentEncoding: 'text',
-    sizeBytes,
+    sizeBytes: Buffer.byteLength(content, 'utf8'),
+    txtFileName,
+    txtMimeType: TXT_MIME,
+    txtSizeBytes: Buffer.byteLength(txtContent, 'utf8'),
     participantCount: parsed.participants.length,
     messageCount: parsed.messages.length,
-    summary: `Generated ${fileName} with ${parsed.participants.length} participants and ${parsed.messages.length} messages. Open in diagrams.net / draw.io.`,
+    summary: `Generated ${fileName} and ${txtFileName} with ${parsed.participants.length} participants and ${parsed.messages.length} messages. Open the .drawio in diagrams.net; paste the .txt into sequencediagram.org.`,
     content,
+    txtContent,
     previewSvg,
     _sota: {
       modelProjection: {
-        omitKeys: ['content', 'previewSvg'],
+        omitKeys: ['content', 'txtContent', 'previewSvg'],
       },
     },
   };

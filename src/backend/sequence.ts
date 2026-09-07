@@ -18,6 +18,57 @@ export type SequenceDiagram = {
   messages: SequenceMessage[];
 };
 
+/** SequenceDiagram.org source (.txt). */
+export function buildSequenceSourceText(diagram: SequenceDiagram): string {
+  const lines: string[] = [];
+  if (diagram.title.trim()) {
+    lines.push(`title ${seqText(diagram.title)}`);
+    lines.push('');
+  }
+  for (const participant of diagram.participants) {
+    lines.push(participantLine(participant));
+  }
+  if (diagram.participants.length > 0) {
+    lines.push('');
+  }
+  for (const message of diagram.messages) {
+    lines.push(messageLine(diagram, message));
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function participantLine(participant: SequenceParticipant): string {
+  const name = seqText(participant.label);
+  return needsQuotes(name) ? `participant "${name.replace(/"/g, "'")}"` : `participant ${name}`;
+}
+
+function messageLine(diagram: SequenceDiagram, message: SequenceMessage): string {
+  const from = actorName(diagram, message.from);
+  const to = actorName(diagram, message.to);
+  const label = seqText(message.label ?? '');
+  const kind = message.from === message.to ? 'self' : message.kind;
+  if (kind === 'return') {
+    return `${to}<--${from}:${label}`;
+  }
+  if (kind === 'async') {
+    return `${from}->(1)${to}:${label}`;
+  }
+  return `${from}->${to}:${label}`;
+}
+
+function actorName(diagram: SequenceDiagram, id: string): string {
+  const participant = diagram.participants.find((item) => item.id === id);
+  return participant ? seqText(participant.label) : id;
+}
+
+function seqText(value: string): string {
+  return value.replace(/[\r\n]+/g, '\\n').replace(/->/g, '→').trim();
+}
+
+function needsQuotes(name: string): boolean {
+  return !/^[A-Za-z][A-Za-z0-9_]*$/.test(name);
+}
+
 const FONT = 'Helvetica';
 const MARGIN = 40;
 const TITLE_H = 40;

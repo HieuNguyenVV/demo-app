@@ -54,10 +54,14 @@ type GenerateSequenceDiagramOutput = {
   mimeType: string;
   contentEncoding: 'text';
   sizeBytes: number;
+  txtFileName: string;
+  txtMimeType: string;
+  txtSizeBytes: number;
   participantCount: number;
   messageCount: number;
   summary: string;
   content: string;
+  txtContent: string;
   previewSvg?: string;
 };
 
@@ -337,7 +341,7 @@ export function GenerateSequenceDiagramResult({
   if (toolResult.state !== 'output-available') return null;
 
   const result = toolResult.result;
-  if (!result?.content || !Number.isFinite(result.sizeBytes)) {
+  if (!result?.content || !result.txtContent || !Number.isFinite(result.sizeBytes)) {
     return <ToolCard status="Could not generate the sequence diagram." />;
   }
 
@@ -354,18 +358,30 @@ export function GenerateSequenceDiagramResult({
           dangerouslySetInnerHTML={{ __html: result.previewSvg }}
         />
       ) : null}
+      <pre className="generate-preview">
+        {result.txtContent.length > 800 ? `${result.txtContent.slice(0, 800)}…` : result.txtContent}
+      </pre>
       <dl className="generate-meta">
         <div><dt>Participants</dt><dd>{result.participantCount}</dd></div>
         <div><dt>Messages</dt><dd>{result.messageCount}</dd></div>
-        <div><dt>Size</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
+        <div><dt>draw.io</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
+        <div><dt>.txt</dt><dd>{formatBytes(result.txtSizeBytes)}</dd></div>
       </dl>
-      <p className="count-preview">Open the download in diagrams.net or the draw.io desktop app.</p>
-      <DownloadLink
-        fileName={result.fileName}
-        content={result.content}
-        contentEncoding={result.contentEncoding}
-        mimeType={result.mimeType}
-      />
+      <p className="count-preview">Open the .drawio in diagrams.net. Paste the .txt into sequencediagram.org.</p>
+      <div className="generate-downloads">
+        <DownloadLink
+          fileName={result.fileName}
+          content={result.content}
+          contentEncoding={result.contentEncoding}
+          mimeType={result.mimeType}
+        />
+        <DownloadLink
+          fileName={result.txtFileName}
+          content={result.txtContent}
+          contentEncoding="text"
+          mimeType={result.txtMimeType || 'text/plain'}
+        />
+      </div>
     </ToolCard>
   );
 }
@@ -671,7 +687,7 @@ function SequenceInputPreview({ input }: { input?: unknown }) {
   const title = typeof record.title === 'string' ? record.title : undefined;
   return (
     <p className="count-preview">
-      {fileName}.drawio{title ? ` · ${title}` : ''}{participants ? ` · ${participants} lifelines` : ''}
+      {fileName}.drawio + .txt{title ? ` · ${title}` : ''}{participants ? ` · ${participants} lifelines` : ''}
     </p>
   );
 }

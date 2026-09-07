@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.9
+version: 1.0.11
 displayName: Inkline
 description: "Office toolkit for PDFs, draw.io diagrams, and meeting minutes."
 publisher:
@@ -22,7 +22,7 @@ contributes:
       timeoutMs: 3000
       failure_mode: skip
     - name: generate-sequencediagram
-      description: When the user wants a sequence diagram, UML sequence, or request/response timeline, call generate-sequencediagram instead of generate-drawio or generate-file.
+      description: When the user wants a sequence diagram, UML sequence, or request/response timeline, call generate-sequencediagram instead of generate-drawio or generate-file. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
       appendsTo: system
       content: src/skills/generate-sequencediagram
       timeoutMs: 3000
@@ -31,12 +31,6 @@ contributes:
       description: When the user attached a non-PDF chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically call upload-file then analyze-file. Do not use for PDF attachments.
       appendsTo: system
       content: src/skills/analyze-file
-      timeoutMs: 3000
-      failure_mode: skip
-    - name: pdf-create
-      description: When an office worker needs a new PDF công văn, báo cáo, tờ trình, letter, or biên bản, call pdf with action create.
-      appendsTo: system
-      content: src/skills/pdf-create
       timeoutMs: 3000
       failure_mode: skip
     - name: meeting-minutes
@@ -61,14 +55,14 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: generate-sequencediagram
-      description: Generate a downloadable draw.io sequence diagram from participants and messages. Use for UML sequence, request/response, or system interaction timelines. Pass native JSON arrays, not stringified arrays. Returns fileName, participantCount, messageCount, and XML for the download card.
+      description: Generate a downloadable draw.io sequence diagram and a SequenceDiagram.org .txt source file from participants and messages. Use for UML sequence, request/response, or system interaction timelines. Pass native JSON arrays, not stringified arrays. Returns fileName (.drawio), txtFileName (.txt), participantCount, and messageCount.
       route: POST /tools/generate-sequencediagram
       inputSchema: src/schemas/generate-sequencediagram-input.schema.json
       outputSchema: src/schemas/generate-sequencediagram-output.schema.json
       timeoutMs: 15000
       failure_mode: abort
     - name: pdf
-      description: Office PDF desk. Create, stamp/split, extract, or summarize. When the user attached a chat PDF, set source to platform, pass platformFileId, fileName, and the full attachment text in content when it is visible (same workaround as upload-file). Prefer fileId for a PDF this app already created. Do not use generate-file for these jobs.
+      description: "Office PDF desk for existing PDFs (stamp/split, extract, or summarize). When the user wants a new PDF, call generate-file with format pdf. When the user attached a chat PDF, set source to platform, pass platformFileId, fileName, and the full attachment text in content when it is visible (same workaround as upload-file). Prefer fileId for a PDF this app already created."
       route: POST /tools/pdf
       inputSchema: src/schemas/pdf-input.schema.json
       outputSchema: src/schemas/pdf-output.schema.json
