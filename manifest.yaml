@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.5
+version: 1.0.6
 displayName: Inkline
 description: "Office toolkit for PDFs, draw.io diagrams, meeting minutes, and text analysis."
 publisher:
@@ -92,7 +92,7 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: generate-drawio
-      description: Generate a downloadable draw.io (.drawio) diagram from nodes and edges. Use when the user wants a flowchart, architecture, process, or diagrams.net file they can open and edit. Do not use generate-file for this. Returns fileName, nodeCount, edgeCount, and XML content for the UI download card.
+      description: Generate a downloadable draw.io (.drawio) diagram from nodes and edges. Use start/end/decision/data kinds, short labels, and top-down for flowcharts or left-right for pipelines so the layout stays readable. Do not use generate-file for this. Returns fileName, nodeCount, edgeCount, and XML for the download card.
       route: POST /tools/generate-drawio
       inputSchema: src/schemas/generate-drawio-input.schema.json
       outputSchema: src/schemas/generate-drawio-output.schema.json

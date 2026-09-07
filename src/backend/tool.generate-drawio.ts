@@ -1,4 +1,4 @@
-import { buildDrawioXml, type DrawioDirection, type DrawioNodeKind } from './drawio.js';
+import { buildDrawioPreviewSvg, buildDrawioXml, type DrawioDirection, type DrawioNodeKind } from './drawio.js';
 import { InvalidToolInputError, isRecord } from './tool.shared.js';
 
 const FILE_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
@@ -18,9 +18,10 @@ export type GenerateDrawioResult = {
   edgeCount: number;
   summary: string;
   content: string;
+  previewSvg: string;
   _sota: {
     modelProjection: {
-      omitKeys: ['content'];
+      omitKeys: ['content', 'previewSvg'];
     };
   };
 };
@@ -28,6 +29,7 @@ export type GenerateDrawioResult = {
 export function handleGenerateDrawio(input: unknown): GenerateDrawioResult {
   const parsed = parseInput(input);
   const content = buildDrawioXml(parsed);
+  const previewSvg = buildDrawioPreviewSvg(parsed);
   const fileName = `${parsed.baseName}.drawio`;
   const sizeBytes = Buffer.byteLength(content, 'utf8');
 
@@ -41,9 +43,10 @@ export function handleGenerateDrawio(input: unknown): GenerateDrawioResult {
     edgeCount: parsed.edges.length,
     summary: `Generated ${fileName} with ${parsed.nodes.length} shapes and ${parsed.edges.length} connectors. Open in diagrams.net / draw.io.`,
     content,
+    previewSvg,
     _sota: {
       modelProjection: {
-        omitKeys: ['content'],
+        omitKeys: ['content', 'previewSvg'],
       },
     },
   };

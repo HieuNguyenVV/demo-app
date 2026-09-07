@@ -53,6 +53,11 @@
       "minLength": 1,
       "maxLength": 500000
     },
+    "previewSvg": {
+      "type": "string",
+      "maxLength": 80000,
+      "description": "Renderer-only SVG preview of the laid-out diagram."
+    },
     "_sota": {
       "type": "object",
       "additionalProperties": false,

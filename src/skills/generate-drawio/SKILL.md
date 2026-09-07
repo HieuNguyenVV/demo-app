@@ -9,16 +9,22 @@ Call `generate-drawio` when the user asks for a draw.io, diagrams.net, mxfile, f
 
 Do not use `generate-file` for this. That tool cannot emit a valid `.drawio` file.
 
-## Input rules
+## Input rules (layout quality)
 
-- Set `fileName` without extension, for example `checkout-flow`.
-- Optional `title` is the page name inside draw.io.
-- Optional `direction`: `top-down` (default, flowcharts) or `left-right` (pipelines).
-- Put every box in `nodes`. Each node needs a unique `id` (`start`, `pay`) and a short `label`.
-- Use `kind` when the shape matters: `start`, `end`, `process`, `decision`, `data`. Default `process`.
-- Put connectors in `edges` with `from` / `to` matching node ids. Use `label` for yes/no or protocol names.
-- Infer a clear graph from the user's description. Do not invent unrelated systems.
-- Stay within 40 nodes and 80 edges. Split huge maps into focused diagrams if needed.
+The backend lays out the graph. Ugly diagrams almost always come from messy input — keep the graph clean.
+
+- `fileName` without extension, for example `checkout-flow`.
+- `title`: short page heading, Vietnamese is fine.
+- `direction`: `top-down` for flowcharts with yes/no; `left-right` for pipelines, timelines, and request/response chains.
+- Every box in `nodes`. Unique `id` (`start`, `pay`). **Short labels** (1–6 words). Do not put a paragraph in a box.
+- Set `kind` so shapes match meaning:
+  - `start` / `end` — terminals
+  - `decision` — questions (diamond). Pair with edge labels `Có` / `Không` or `Yes` / `No`
+  - `data` — document, record, database
+  - `process` — a step (default)
+- `edges` `from` / `to` must match ids. One primary path down/right. Avoid dumping a complete mesh.
+- Put nodes in **flow order** (start first, end last). Infer a clear graph; do not invent unrelated systems.
+- Stay within 40 nodes and 80 edges. Split huge maps into focused diagrams.
 
 ## After the tool returns
 

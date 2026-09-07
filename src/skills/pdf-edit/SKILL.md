@@ -35,5 +35,4 @@ If the host shows **no** readable PDF text (scanned/image PDF), say you cannot s
 ## PDF this app already created
 
 Use `source: "file"` and that `fileId`. Do not use `source: platform` for Inkline-generated files.
-
 `page-range` only works with `source: file` + `fileId` or original PDF bytes.

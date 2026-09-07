@@ -18,7 +18,7 @@
     "direction": {
       "type": "string",
       "enum": ["top-down", "left-right"],
-      "description": "Layout direction. Default top-down for flowcharts."
+      "description": "Layout direction. Use top-down for flowcharts with decisions; left-right for pipelines and sequences."
     },
     "nodes": {
       "type": "array",
@@ -41,12 +41,12 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80,
-            "description": "Text shown inside the shape."
+            "description": "Short text inside the shape. Prefer 1 to 6 words so the box stays readable."
           },
           "kind": {
             "type": "string",
             "enum": ["process", "decision", "start", "end", "data"],
-            "description": "Shape style. Default process."
+            "description": "Use start and end for terminals, decision for yes/no diamonds, data for documents/records, process for steps. Default process."
           }
         }
       }

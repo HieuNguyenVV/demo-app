@@ -68,6 +68,7 @@ type GenerateDrawioOutput = {
   edgeCount: number;
   summary: string;
   content: string;
+  previewSvg?: string;
 };
 
 type PdfInput = {
@@ -417,6 +418,12 @@ export function GenerateDrawioResult({
         <span className="analyze-file">{result.fileName}</span>
       </div>
       <p className="analyze-summary">{result.summary}</p>
+      {result.previewSvg ? (
+        <div
+          className="drawio-preview"
+          dangerouslySetInnerHTML={{ __html: result.previewSvg }}
+        />
+      ) : null}
       <dl className="generate-meta">
         <div><dt>Shapes</dt><dd>{result.nodeCount}</dd></div>
         <div><dt>Connectors</dt><dd>{result.edgeCount}</dd></div>

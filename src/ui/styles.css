@@ -172,6 +172,21 @@
   white-space: pre-wrap;
 }
 
+[data-sota-app="inkline"] .drawio-preview {
+  background: #f8fafc;
+  border-radius: 10px;
+  margin: 14px 0 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+}
+
+[data-sota-app="inkline"] .drawio-preview svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
 [data-sota-app="inkline"] .generate-download {
   color: #1267e5;
   display: inline-block;

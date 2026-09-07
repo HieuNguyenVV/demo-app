@@ -11,18 +11,22 @@ Trước khi thêm field lạ: `sota manifest schema` hoặc `sota manifest expl
 
 ## 0. Quyết định custom cái gì
 
-| Mục tiêu | Làm gì | Không làm |
-|---|---|---|
-| Đổi tên hiện thị | `displayName` / `description` trong `manifest.yaml` | Đổi `appId` nếu đã deploy (JWT `aud` + catalog) |
-| Agent biết khi nào gọi tool | Skill `src/skills/<name>/SKILL.md` + `description` trên tool | Slash command — skill là system prompt |
-| Agent thực thi việc | Tool: schema + route + handler | Gọi private Core API từ UI |
-| Card dưới tin nhắn chat | Native `tool-view` trong `src/ui/app.tsx` | Deploy frontend lên `api.viet.it.com` |
-| Tab Admin workspace | `surface: page` + `useAppFetch` | Hardcode URL backend |
-| Tính toán / file / DB | Backend `src/backend/` | Tin `oid`/`wid` từ body request |
+
+| Mục tiêu                    | Làm gì                                                       | Không làm                                       |
+| --------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
+| Đổi tên hiện thị            | `displayName` / `description` trong `manifest.yaml`          | Đổi `appId` nếu đã deploy (JWT `aud` + catalog) |
+| Agent biết khi nào gọi tool | Skill `src/skills/<name>/SKILL.md` + `description` trên tool | Slash command — skill là system prompt          |
+| Agent thực thi việc         | Tool: schema + route + handler                               | Gọi private Core API từ UI                      |
+| Card dưới tin nhắn chat     | Native `tool-view` trong `src/ui/app.tsx`                    | Deploy frontend lên `api.viet.it.com`           |
+| Tab Admin workspace         | `surface: page` + `useAppFetch`                              | Hardcode URL backend                            |
+| Tính toán / file / DB       | Backend `src/backend/`                                       | Tin `oid`/`wid` từ body request                 |
+
 
 Core lo: org, workspace, install, JWT, chọn Staging/Production, chat shell.
 
 ---
+
+
 
 ## 1. Identity (một lần)
 
@@ -36,6 +40,8 @@ Hiện tại:
 Đổi `appId` phải sửa đồng bộ: `manifest.yaml`, `src/backend/server.ts`, `data-sota-app`, CSS, `sectionId`/`route` Admin, rebuild UI, **rebuild Docker trên VPS**.
 
 ---
+
+
 
 ## 2. Vòng lặp local (trước khi deploy)
 
@@ -62,6 +68,8 @@ npx vite build --watch --config vite.config.ts
 ```
 
 ---
+
+
 
 ## 3. Thêm capability mới — thứ tự file
 
@@ -157,12 +165,16 @@ Nếu CLI/bundle liệt kê skill path, thêm `src/skills/do-thing` cho khớp c
 
 ---
 
+
+
 ## 4. Custom UI Admin
 
 `AdminScreen` + `route: /inkline/*` + `slot: admin.workspace.tab`.  
 Gọi backend: `useAppFetch`. Route đó cũng `requireSotaInvocation` với scope `app:http` (xem `/api/hello`).
 
 ---
+
+
 
 ## 5. Đổi copy / i18n
 
@@ -171,6 +183,8 @@ Gọi backend: `useAppFetch`. Route đó cũng `requireSotaInvocation` với sco
 - Hướng dẫn agent: `src/skills/*/SKILL.md` và `description` của tool
 
 ---
+
+
 
 ## 6. Kiểm tra rồi đẩy lên Core
 
@@ -190,6 +204,8 @@ Promote Production: `sota release` sau khi Staging ổn. Chi tiết: [sota-login
 
 ---
 
+
+
 ## 7. Việc không custom trong app
 
 - Mint JWT / giữ private key Sota
@@ -200,13 +216,16 @@ Promote Production: `sota release` sau khi Staging ổn. Chi tiết: [sota-login
 
 ---
 
+
+
 ## 8. Checklist một thay đổi
 
-1. Schema input/output  
-2. Handler + `requireSotaInvocation(appId, 'tool:…')`  
-3. `manifest.yaml` tool (+ skill, + ui nếu có)  
-4. `surfaces` export khớp `module.export`  
-5. CSS `[data-sota-app="inkline"]`  
-6. `sota validate`  
-7. Local: `sota dev` **hoặc** `sota deploy` + rebuild VPS  
+1. Schema input/output
+2. Handler + `requireSotaInvocation(appId, 'tool:…')`
+3. `manifest.yaml` tool (+ skill, + ui nếu có)
+4. `surfaces` export khớp `module.export`
+5. CSS `[data-sota-app="inkline"]`
+6. `sota validate`
+7. Local: `sota dev` **hoặc** `sota deploy` + rebuild VPS
 8. Chat `@ Inkline`, gọi đúng workflow, xem card + log 401 `aud` nếu image cũ
+
