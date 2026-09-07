@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.11
+version: 1.0.13
 displayName: Inkline
 description: "Office toolkit for PDFs, draw.io diagrams, and meeting minutes."
 publisher:
@@ -22,7 +22,7 @@ contributes:
       timeoutMs: 3000
       failure_mode: skip
     - name: generate-sequencediagram
-      description: When the user wants a sequence diagram, UML sequence, or request/response timeline, call generate-sequencediagram instead of generate-drawio or generate-file. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
+      description: When the user wants a sequence diagram, UML sequence, request/response timeline, if/else, loop, note, or parallel path, call generate-sequencediagram instead of generate-drawio or generate-file. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
       appendsTo: system
       content: src/skills/generate-sequencediagram
       timeoutMs: 3000
@@ -55,7 +55,7 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: generate-sequencediagram
-      description: Generate a downloadable draw.io sequence diagram and a SequenceDiagram.org .txt source file from participants and messages. Use for UML sequence, request/response, or system interaction timelines. Pass native JSON arrays, not stringified arrays. Returns fileName (.drawio), txtFileName (.txt), participantCount, and messageCount.
+      description: Generate a downloadable draw.io sequence diagram and a SequenceDiagram.org .txt source file from participants and messages. Use for UML sequence, request/response, if/else (alt/else), loops, notes, and parallel paths. Pass native JSON arrays, not stringified arrays. Returns fileName (.drawio), txtFileName (.txt), participantCount, and messageCount.
       route: POST /tools/generate-sequencediagram
       inputSchema: src/schemas/generate-sequencediagram-input.schema.json
       outputSchema: src/schemas/generate-sequencediagram-output.schema.json

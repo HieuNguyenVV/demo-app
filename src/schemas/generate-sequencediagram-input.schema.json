@@ -23,10 +23,10 @@
       ]
     },
     "messages": {
-      "description": "Calls in time order, top to bottom. Native JSON array preferred; a JSON array string is also accepted.",
+      "description": "Time-ordered steps: calls and common markers (alt/else/loop/opt/par/break/note/activate). Native JSON array preferred; a JSON array string is also accepted.",
       "oneOf": [
         { "$ref": "#/$defs/messageList" },
-        { "type": "string", "minLength": 2, "maxLength": 12000 }
+        { "type": "string", "minLength": 2, "maxLength": 16000 }
       ]
     }
   },
@@ -59,34 +59,75 @@
     "messageList": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 40,
+      "maxItems": 64,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["from", "to"],
-        "properties": {
-          "from": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 32,
-            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
-          },
-          "to": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 32,
-            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 48,
-            "description": "Short call name, for example POST /login."
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["sync", "async", "return", "self"],
-            "description": "sync = solid call, async = open arrow, return = dashed reply, self = loop on the same lifeline. Default sync."
-          }
+        "oneOf": [
+          { "$ref": "#/$defs/call" },
+          { "$ref": "#/$defs/fragment" }
+        ]
+      }
+    },
+    "call": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["message"]
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 48,
+          "description": "Short call name, for example POST /login."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["sync", "async", "return", "self"],
+          "description": "sync = solid call, async = open arrow, return = dashed reply, self = loop on the same lifeline. Default sync."
+        }
+      }
+    },
+    "fragment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["alt", "else", "loop", "opt", "par", "break", "end", "note", "activate", "deactivate"],
+          "description": "alt/else/end = if/else. loop/end = repeat. opt/end = optional. par/else/end = parallel. break/end = exception path. note = comment over lifelines. activate/deactivate = execution bar. Close every alt/loop/opt/par/break with end."
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "description": "Required for note, activate, and deactivate."
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "description": "Optional second lifeline for note. Defaults to from."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 48,
+          "description": "Condition, note text, or branch name. Ignored on end/activate/deactivate."
         }
       }
     }

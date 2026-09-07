@@ -7,7 +7,7 @@ description: Use when the user wants a draw.io / diagrams.net flowchart or archi
 
 Call `generate-drawio` when the user asks for a draw.io, diagrams.net, mxfile, flowchart, architecture diagram, or process diagram they can open and edit.
 
-For a **sequence diagram**, UML sequence, or request/response timeline, call `generate-sequencediagram` instead.
+For a **sequence diagram**, UML sequence, request/response timeline, **if/else**, or **loop**, call `generate-sequencediagram` instead.
 
 Do not use `generate-file` for this. That tool cannot emit a valid `.drawio` file.
 

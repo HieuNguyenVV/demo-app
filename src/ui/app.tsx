@@ -45,7 +45,13 @@ type GenerateSequenceDiagramInput = {
   fileName: string;
   title?: string;
   participants: Array<{ id: string; label: string }>;
-  messages: Array<{ from: string; to: string; label?: string; kind?: 'sync' | 'async' | 'return' | 'self' }>;
+  messages: Array<{
+    type?: 'message' | 'alt' | 'else' | 'loop' | 'opt' | 'par' | 'break' | 'end' | 'note' | 'activate' | 'deactivate';
+    from?: string;
+    to?: string;
+    label?: string;
+    kind?: 'sync' | 'async' | 'return' | 'self';
+  }>;
 };
 
 type GenerateSequenceDiagramOutput = {
