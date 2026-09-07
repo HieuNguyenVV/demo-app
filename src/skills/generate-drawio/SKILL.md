@@ -1,11 +1,13 @@
 ---
 name: generate-drawio
-description: Use when the user wants a draw.io / diagrams.net flowchart, architecture, or process diagram as a .drawio file.
+description: Use when the user wants a draw.io / diagrams.net flowchart or architecture diagram as a .drawio file. For sequence diagrams use generate-sequencediagram.
 ---
 
 # Generate draw.io diagram
 
 Call `generate-drawio` when the user asks for a draw.io, diagrams.net, mxfile, flowchart, architecture diagram, or process diagram they can open and edit.
+
+For a **sequence diagram**, UML sequence, or request/response timeline, call `generate-sequencediagram` instead.
 
 Do not use `generate-file` for this. That tool cannot emit a valid `.drawio` file.
 
@@ -15,7 +17,7 @@ The backend lays out the graph. Ugly diagrams almost always come from messy inpu
 
 - `fileName` without extension, for example `checkout-flow`.
 - `title`: short page heading, Vietnamese is fine.
-- `direction`: `top-down` for flowcharts with yes/no; `left-right` for pipelines, timelines, and request/response chains.
+- `direction`: `top-down` for flowcharts with yes/no; `left-right` for pipelines, timelines, and request/response chains. The backend balances columns, side branches, and page size — keep the graph simple and let it layout.
 - Every box in `nodes`. Unique `id` (`start`, `pay`). **Short labels** (1–6 words). Do not put a paragraph in a box.
 - Set `kind` so shapes match meaning:
   - `start` / `end` — terminals

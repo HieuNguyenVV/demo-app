@@ -1,13 +1,13 @@
 ---
 name: analyze-file
-description: When the user attached a non-PDF chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically upload to the app server then analyze it. Use the pdf tool for PDF attachments.
+description: When the user attached a non-PDF chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically upload to the app server then analyze it. Do not use for PDF attachments.
 ---
 
 # Read and analyze user files
 
 Use this workflow whenever the user wants to read or analyze a **text** file they provided (txt, md, csv, json).
 
-If the attachment is a **PDF**, stop and use the `pdf` tool instead (`analyze` / `extract` / `edit`). Do not call `upload-file` for PDFs.
+If the attachment is a **PDF**, do not call `upload-file` or this workflow. For a new office PDF, use `pdf` with `action: create`.
 
 The user does **not** need to say "upload". If they attached a non-PDF file and ask to read, analyze, summarize, review, or explain it — even briefly — run the full workflow immediately.
 
@@ -53,9 +53,6 @@ Do not paste the full `preview` unless the user explicitly asks for it.
 
 ## Do not use this workflow for
 
-- **PDF attachments** (`.pdf`) → call `pdf` instead: `action: analyze` to brief, `action: extract` to copy text, `action: edit` to stamp/cover/notes. Pass `source: "platform"`, `platformFileId`, `fileName`, and the full visible attachment text in `content` (same workaround as upload-file).
-- Bundled demo files inside the app → use `analyze-text` with `source: "file"` and `sample-article.txt` or `sample-notes.txt`.
-- Quick exact counts on inline pasted text only → use `count-words`.
+- **PDF attachments** (`.pdf`) → do not use this workflow. For a new công văn / báo cáo PDF, call `pdf` with `action: create`.
 - Creating export files → use `generate-file`.
 
-When a chat attachment exists and it is **not** a PDF, never use `analyze-text` instead of this workflow.

@@ -2,36 +2,6 @@ import './styles.css';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAppFetch, type ToolResultSurfaceProps } from '@sota/platform';
 
-type CountWordsInput = {
-  text: string;
-};
-
-type CountWordsOutput = {
-  wordCount: number;
-  characterCount: number;
-  lineCount: number;
-};
-
-type AnalyzeTextInput = {
-  source: 'text' | 'file';
-  text?: string;
-  fileName?: string;
-  topWordsLimit?: number;
-};
-
-type AnalyzeTextOutput = {
-  source: 'text' | 'file';
-  fileName?: string;
-  wordCount: number;
-  characterCount: number;
-  lineCount: number;
-  sentenceCount: number;
-  averageWordLength: number;
-  readingMinutes: number;
-  summary: string;
-  topWords: Array<{ word: string; count: number }>;
-};
-
 type GenerateFileInput = {
   fileName: string;
   format: 'txt' | 'md' | 'json' | 'csv' | 'pdf';
@@ -66,6 +36,26 @@ type GenerateDrawioOutput = {
   sizeBytes: number;
   nodeCount: number;
   edgeCount: number;
+  summary: string;
+  content: string;
+  previewSvg?: string;
+};
+
+type GenerateSequenceDiagramInput = {
+  fileName: string;
+  title?: string;
+  participants: Array<{ id: string; label: string }>;
+  messages: Array<{ from: string; to: string; label?: string; kind?: 'sync' | 'async' | 'return' | 'self' }>;
+};
+
+type GenerateSequenceDiagramOutput = {
+  fileName: string;
+  format: 'drawio';
+  mimeType: string;
+  contentEncoding: 'text';
+  sizeBytes: number;
+  participantCount: number;
+  messageCount: number;
   summary: string;
   content: string;
   previewSvg?: string;
@@ -190,133 +180,6 @@ export function AdminScreen() {
   );
 }
 
-export function CountWordsResult({
-  toolResult,
-}: ToolResultSurfaceProps<CountWordsInput, CountWordsOutput>) {
-  if (toolResult.state === 'input-streaming') {
-    return (
-      <ToolCard status="Reading text…" busy>
-        <TextPreview value={partialText(toolResult.input)} />
-      </ToolCard>
-    );
-  }
-
-  if (
-    toolResult.state === 'input-available' ||
-    toolResult.state === 'output-pending' ||
-    toolResult.state === 'approval-requested'
-  ) {
-    return (
-      <ToolCard status="Counting…" busy>
-        <TextPreview value={toolResult.input.text} />
-      </ToolCard>
-    );
-  }
-
-  if (toolResult.state === 'output-denied') {
-    return <ToolCard status="Word count was not approved." />;
-  }
-
-  if (toolResult.state === 'output-error') {
-    return <ToolCard status={toolResult.errorText ?? 'Could not count words.'} />;
-  }
-
-  if (toolResult.state !== 'output-available') return null;
-
-  const result = toolResult.result;
-  if (!result) return <ToolCard status="Could not count words." />;
-
-  return (
-    <ToolCard status="Word count">
-      <dl className="count-stats">
-        <div>
-          <dt>Words</dt>
-          <dd>{result.wordCount}</dd>
-        </div>
-        <div>
-          <dt>Characters</dt>
-          <dd>{result.characterCount}</dd>
-        </div>
-        <div>
-          <dt>Lines</dt>
-          <dd>{result.lineCount}</dd>
-        </div>
-      </dl>
-    </ToolCard>
-  );
-}
-
-export function AnalyzeTextResult({
-  toolResult,
-}: ToolResultSurfaceProps<AnalyzeTextInput, AnalyzeTextOutput>) {
-  if (toolResult.state === 'input-streaming') {
-    return (
-      <ToolCard status="Preparing analysis…" busy>
-        <AnalyzeInputPreview input={toolResult.input} />
-      </ToolCard>
-    );
-  }
-
-  if (
-    toolResult.state === 'input-available' ||
-    toolResult.state === 'output-pending' ||
-    toolResult.state === 'approval-requested'
-  ) {
-    return (
-      <ToolCard status="Analyzing text…" busy>
-        <AnalyzeInputPreview input={toolResult.input} />
-      </ToolCard>
-    );
-  }
-
-  if (toolResult.state === 'output-denied') {
-    return <ToolCard status="Text analysis was not approved." />;
-  }
-
-  if (toolResult.state === 'output-error') {
-    return <ToolCard status={toolResult.errorText ?? 'Could not analyze text.'} />;
-  }
-
-  if (toolResult.state !== 'output-available') return null;
-
-  const result = toolResult.result;
-  if (!result) return <ToolCard status="Could not analyze text." />;
-
-  const maxCount = result.topWords[0]?.count ?? 1;
-
-  return (
-    <ToolCard status="Text analysis">
-      <div className="analyze-header">
-        <span className="analyze-badge">{result.source === 'file' ? 'Sample file' : 'Inline text'}</span>
-        {result.fileName ? <span className="analyze-file">{result.fileName}</span> : null}
-      </div>
-      <p className="analyze-summary">{result.summary}</p>
-      <dl className="analyze-stats">
-        <div><dt>Words</dt><dd>{result.wordCount}</dd></div>
-        <div><dt>Sentences</dt><dd>{result.sentenceCount}</dd></div>
-        <div><dt>Read time</dt><dd>{result.readingMinutes} min</dd></div>
-        <div><dt>Avg length</dt><dd>{result.averageWordLength}</dd></div>
-        <div><dt>Characters</dt><dd>{result.characterCount}</dd></div>
-        <div><dt>Lines</dt><dd>{result.lineCount}</dd></div>
-      </dl>
-      {result.topWords.length > 0 ? (
-        <div className="analyze-keywords">
-          <p className="analyze-keywords-title">Top keywords</p>
-          <ul>
-            {result.topWords.map((item) => (
-              <li key={item.word}>
-                <span className="analyze-keyword-label">{item.word}</span>
-                <span className="analyze-keyword-bar" style={{ width: `${Math.max(12, (item.count / maxCount) * 100)}%` }} />
-                <span className="analyze-keyword-count">{item.count}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </ToolCard>
-  );
-}
-
 export function GenerateFileResult({
   toolResult,
 }: ToolResultSurfaceProps<GenerateFileInput, GenerateFileOutput>) {
@@ -427,6 +290,73 @@ export function GenerateDrawioResult({
       <dl className="generate-meta">
         <div><dt>Shapes</dt><dd>{result.nodeCount}</dd></div>
         <div><dt>Connectors</dt><dd>{result.edgeCount}</dd></div>
+        <div><dt>Size</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
+      </dl>
+      <p className="count-preview">Open the download in diagrams.net or the draw.io desktop app.</p>
+      <DownloadLink
+        fileName={result.fileName}
+        content={result.content}
+        contentEncoding={result.contentEncoding}
+        mimeType={result.mimeType}
+      />
+    </ToolCard>
+  );
+}
+
+export function GenerateSequenceDiagramResult({
+  toolResult,
+}: ToolResultSurfaceProps<GenerateSequenceDiagramInput, GenerateSequenceDiagramOutput>) {
+  if (toolResult.state === 'input-streaming') {
+    return (
+      <ToolCard status="Preparing sequence diagram…" busy>
+        <SequenceInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (
+    toolResult.state === 'input-available' ||
+    toolResult.state === 'output-pending' ||
+    toolResult.state === 'approval-requested'
+  ) {
+    return (
+      <ToolCard status="Building sequence diagram…" busy>
+        <SequenceInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (toolResult.state === 'output-denied') {
+    return <ToolCard status="Sequence diagram was not approved." />;
+  }
+
+  if (toolResult.state === 'output-error') {
+    return <ToolCard status={toolResult.errorText ?? 'Could not generate the sequence diagram.'} />;
+  }
+
+  if (toolResult.state !== 'output-available') return null;
+
+  const result = toolResult.result;
+  if (!result?.content || !Number.isFinite(result.sizeBytes)) {
+    return <ToolCard status="Could not generate the sequence diagram." />;
+  }
+
+  return (
+    <ToolCard status="Sequence diagram">
+      <div className="generate-header">
+        <span className="analyze-badge">SEQUENCE</span>
+        <span className="analyze-file">{result.fileName}</span>
+      </div>
+      <p className="analyze-summary">{result.summary}</p>
+      {result.previewSvg ? (
+        <div
+          className="drawio-preview"
+          dangerouslySetInnerHTML={{ __html: result.previewSvg }}
+        />
+      ) : null}
+      <dl className="generate-meta">
+        <div><dt>Participants</dt><dd>{result.participantCount}</dd></div>
+        <div><dt>Messages</dt><dd>{result.messageCount}</dd></div>
         <div><dt>Size</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
       </dl>
       <p className="count-preview">Open the download in diagrams.net or the draw.io desktop app.</p>
@@ -706,25 +636,6 @@ function ToolCard({
   );
 }
 
-function TextPreview({ value }: { value?: string }) {
-  if (!value) return <p className="count-preview">Waiting for the model…</p>;
-  return <p className="count-preview">{value.length > 160 ? `${value.slice(0, 160)}…` : value}</p>;
-}
-
-function AnalyzeInputPreview({ input }: { input?: unknown }) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return <p className="count-preview">Waiting for the model…</p>;
-  }
-  const record = input as Record<string, unknown>;
-  if (record.source === 'file' && typeof record.fileName === 'string') {
-    return <p className="count-preview">File: {record.fileName}</p>;
-  }
-  if (typeof record.text === 'string') {
-    return <TextPreview value={record.text} />;
-  }
-  return <p className="count-preview">Waiting for analysis input…</p>;
-}
-
 function GenerateInputPreview({ input }: { input?: unknown }) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return <p className="count-preview">Waiting for the model…</p>;
@@ -746,6 +657,21 @@ function DrawioInputPreview({ input }: { input?: unknown }) {
   return (
     <p className="count-preview">
       {fileName}.drawio{title ? ` · ${title}` : ''}{nodes ? ` · ${nodes} shapes` : ''}
+    </p>
+  );
+}
+
+function SequenceInputPreview({ input }: { input?: unknown }) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return <p className="count-preview">Waiting for the model…</p>;
+  }
+  const record = input as Record<string, unknown>;
+  const fileName = typeof record.fileName === 'string' ? record.fileName : 'sequence';
+  const participants = Array.isArray(record.participants) ? record.participants.length : 0;
+  const title = typeof record.title === 'string' ? record.title : undefined;
+  return (
+    <p className="count-preview">
+      {fileName}.drawio{title ? ` · ${title}` : ''}{participants ? ` · ${participants} lifelines` : ''}
     </p>
   );
 }
@@ -848,22 +774,16 @@ function previewFileContent(result: GenerateFileOutput): string {
 }
 
 function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—';
   if (bytes < 1024) return `${bytes} B`;
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-function partialText(input: unknown): string | undefined {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return undefined;
-  const text = (input as Record<string, unknown>).text;
-  return typeof text === 'string' ? text : undefined;
-}
-
 export const surfaces = {
   AdminScreen,
-  CountWordsResult,
-  AnalyzeTextResult,
   GenerateFileResult,
   GenerateDrawioResult,
+  GenerateSequenceDiagramResult,
   PdfResult,
   UploadFileResult,
   AnalyzeFileResult,

@@ -151,7 +151,7 @@ Phải có `"appId":"inkline"`. Log token reject `unexpected "aud" claim` với 
 
 1. Console: [https://app.sotaagents.ai/console/apps](https://app.sotaagents.ai/console/apps) — Inkline, môi trường Staging.
 2. Install vào org/workspace đang chat.
-3. Trong chat: **@ Inkline**, gọi tool (ví dụ count-words).
+3. Trong chat: **@ Inkline**, gọi tool (ví dụ generate-drawio).
 4. Card tool hiện **dưới** tin nhắn sau khi tool thành công.
 
 Chưa `sota release` thì Production Core trống; test trên Staging.

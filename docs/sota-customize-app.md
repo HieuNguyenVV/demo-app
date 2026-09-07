@@ -73,7 +73,7 @@ npx vite build --watch --config vite.config.ts
 
 ## 3. Thêm capability mới — thứ tự file
 
-Ví dụ tool `do-thing`. Copy pattern `count-words`.
+Ví dụ tool `do-thing`. Copy pattern `generate-file`.
 
 ### 3.1 JSON Schema
 

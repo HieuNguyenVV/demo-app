@@ -1,0 +1,80 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fileName",
+    "format",
+    "mimeType",
+    "contentEncoding",
+    "sizeBytes",
+    "participantCount",
+    "messageCount",
+    "summary",
+    "content"
+  ],
+  "properties": {
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "format": {
+      "type": "string",
+      "enum": ["drawio"]
+    },
+    "mimeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "contentEncoding": {
+      "type": "string",
+      "enum": ["text"]
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "participantCount": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "messageCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500000
+    },
+    "previewSvg": {
+      "type": "string",
+      "maxLength": 80000,
+      "description": "Renderer-only SVG preview of the sequence diagram."
+    },
+    "_sota": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelProjection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "omitKeys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

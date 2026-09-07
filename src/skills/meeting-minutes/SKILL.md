@@ -44,5 +44,5 @@ Do not call `generate-file` just to recreate the same Word export.
 
 ## When not to use
 
-- General text stats → `analyze-text` or `analyze-file`.
+- General text stats on an attached file → `analyze-file`.
 - Simple todo extraction without meeting structure → ask the user to clarify or structure notes first.

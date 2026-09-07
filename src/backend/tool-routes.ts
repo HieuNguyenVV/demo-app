@@ -2,10 +2,9 @@ import type { Express } from 'express';
 import express from 'express';
 import { FileNotFoundError } from './file-store.js';
 import { handleAnalyzeFile } from './tool.analyze-file.js';
-import { handleAnalyzeText } from './tool.analyze-text.js';
-import { handleCountWords } from './tool.count-words.js';
 import { handleGenerateDrawio } from './tool.generate-drawio.js';
 import { handleGenerateFile } from './tool.generate-file.js';
+import { handleGenerateSequenceDiagram } from './tool.generate-sequencediagram.js';
 import { handleMeetingMinutes } from './tool.meeting-minutes.js';
 import { handlePdf, PlatformFileError } from './tool.pdf.js';
 import { handleUploadFile } from './tool.upload-file.js';
@@ -14,20 +13,16 @@ import type { InvocationClaims } from './sota-auth.js';
 import { requireSotaInvocation } from './sota-auth.js';
 
 export function registerToolRoutes(app: Express, appId: string) {
-  app.post('/tools/count-words', requireSotaInvocation(appId, 'tool:count-words'), async (request, response) => {
-    await respondWithTool(request, response, (input) => handleCountWords(input));
-  });
-
-  app.post('/tools/analyze-text', requireSotaInvocation(appId, 'tool:analyze-text'), async (request, response) => {
-    await respondWithTool(request, response, (input) => handleAnalyzeText(input));
-  });
-
   app.post('/tools/generate-file', requireSotaInvocation(appId, 'tool:generate-file'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleGenerateFile(input));
   });
 
   app.post('/tools/generate-drawio', requireSotaInvocation(appId, 'tool:generate-drawio'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleGenerateDrawio(input));
+  });
+
+  app.post('/tools/generate-sequencediagram', requireSotaInvocation(appId, 'tool:generate-sequencediagram'), async (request, response) => {
+    await respondWithTool(request, response, (input) => handleGenerateSequenceDiagram(input));
   });
 
   app.post('/tools/pdf', requireSotaInvocation(appId, 'tool:pdf'), async (request, response) => {
