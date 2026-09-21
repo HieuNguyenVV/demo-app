@@ -10,7 +10,7 @@ Call `generate-drawio` when the user asks for a draw.io, diagrams.net, mxfile, f
 For a **sequence diagram**, UML sequence, request/response timeline, **if/else**, or **loop**, call `generate-sequencediagram` instead.
 
 Do not use this tool for sequence diagrams. Call `generate-sequencediagram` instead.
-Do not use this tool to search the web. Call `web-search` instead.
+Do not use this tool to search the web. Call `inkline-search` instead. Never use platform /search or Web Search.
 
 ## Input rules (layout quality)
 

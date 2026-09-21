@@ -87,7 +87,7 @@ SOTA_WEB_ORIGIN: https://app.sotaagents.ai
 OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 ```
 
-Đặt `OPENAI_API_KEY` trong `.env` trên VPS (không commit). Tool `web-search` rewrite query rồi gọi OpenAI web search.
+Đặt `OPENAI_API_KEY` trong `.env` trên VPS (không commit). Tool `inkline-search` (`/inksearch`) rewrite query rồi gọi OpenAI. Không dùng slash `/search` của platform.
 
 `service.baseUrl` / `health.url` trong manifest: `https://api.viet.it.com` (localhost chỉ nằm trong `environments.local`).
 

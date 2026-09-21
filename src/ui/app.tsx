@@ -184,7 +184,7 @@ type BackendStatus = 'connecting' | 'ok' | 'error';
 
 const FLOW_PROMPT = 'Vẽ flowchart draw.io quy trình duyệt nghỉ phép, fileName: duyet-nghi-phep.';
 const SEQUENCE_PROMPT = 'Vẽ sequence diagram đăng nhập, fileName: dang-nhap, có if/else khi mật khẩu sai.';
-const SEARCH_PROMPT = 'Tìm trên mạng: tại sao nước biển lại mặn?';
+const SEARCH_PROMPT = '@ Inkline /inksearch tại sao nước biển lại mặn';
 
 export function AdminScreen() {
   const appFetch = useAppFetch();
@@ -240,9 +240,9 @@ export function AdminScreen() {
           <PromptCopy label="Thử prompt sequence" text={SEQUENCE_PROMPT} />
         </article>
         <article className="admin-card">
-          <p className="admin-card-kicker">web-search</p>
+          <p className="admin-card-kicker">inkline-search</p>
           <h2>Web search</h2>
-          <p>App rewrite câu hỏi, rồi OpenAI web search, trả tóm tắt + nguồn về agent Sota.</p>
+          <p>Dùng <code>/inksearch</code> hoặc <strong>@ Inkline</strong> — không dùng <code>/search</code> của Sota. App rewrite câu hỏi rồi OpenAI search.</p>
           <PromptCopy label="Thử prompt search" text={SEARCH_PROMPT} />
         </article>
       </section>
@@ -250,9 +250,9 @@ export function AdminScreen() {
       <section className="admin-howto" aria-labelledby="admin-howto-title">
         <h2 id="admin-howto-title">Cách dùng</h2>
         <ol>
-          <li>Mở chat workspace, gõ <strong>@ Inkline</strong>.</li>
+          <li>Mở chat workspace, gõ <strong>@ Inkline</strong> (tra cứu thì <code>/inksearch</code>, không dùng <code>/search</code>).</li>
           <li>Mô tả quy trình (flowchart), tương tác hệ thống (sequence), hoặc câu hỏi cần tra cứu web.</li>
-          <li>Tải file từ card kết quả, hoặc đọc tóm tắt + nguồn của web search.</li>
+          <li>Tải file từ card kết quả, hoặc đọc tóm tắt + nguồn của Inkline search.</li>
         </ol>
       </section>
     </main>

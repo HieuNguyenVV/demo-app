@@ -26,7 +26,10 @@ export function registerToolRoutes(app: Express, appId: string) {
     await respondWithTool(request, response, (input) => handleGenerateSequenceDiagram(input));
   });
 
-  app.post('/tools/web-search', requireSotaInvocation(appId, 'tool:web-search'), async (request, response) => {
+  app.post('/tools/inkline-search', requireSotaInvocation(appId, 'tool:inkline-search'), async (request, response) => {
+    await respondWithTool(request, response, (input) => handleWebSearch(input));
+  });
+  app.post('/tools/web-search', requireSotaInvocation(appId, 'tool:inkline-search'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleWebSearch(input));
   });
 
