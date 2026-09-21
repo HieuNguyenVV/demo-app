@@ -12,7 +12,7 @@ The tool returns **two files**:
 - **`.txt`** — SequenceDiagram.org source
 
 Do **not** use `generate-drawio` for this. That tool lays out flowcharts, not lifelines.
-Do **not** use `generate-file`.
+Do **not** use this tool to search the web. Call `web-search` instead.
 
 Infer participants and messages from the user's request. Do not invent extra systems.
 

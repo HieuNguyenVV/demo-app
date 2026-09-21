@@ -54,6 +54,18 @@ type GenerateSequenceDiagramInput = {
   }>;
 };
 
+type WebSearchInput = {
+  query: string;
+};
+
+type WebSearchOutput = {
+  originalQuery: string;
+  rewrittenQuery: string;
+  summary: string;
+  sourceCount: number;
+  sources: Array<{ title: string; url: string }>;
+};
+
 type GenerateSequenceDiagramOutput = {
   fileName: string;
   format: 'drawio';
@@ -168,25 +180,105 @@ type MeetingMinutesOutput = {
   docContent: string;
 };
 
+type BackendStatus = 'connecting' | 'ok' | 'error';
+
+const FLOW_PROMPT = 'Vẽ flowchart draw.io quy trình duyệt nghỉ phép, fileName: duyet-nghi-phep.';
+const SEQUENCE_PROMPT = 'Vẽ sequence diagram đăng nhập, fileName: dang-nhap, có if/else khi mật khẩu sai.';
+const SEARCH_PROMPT = 'Tìm trên mạng: tại sao nước biển lại mặn?';
+
 export function AdminScreen() {
   const appFetch = useAppFetch();
-  const [message, setMessage] = useState('Connecting to backend…');
+  const [status, setStatus] = useState<BackendStatus>('connecting');
+  const [statusDetail, setStatusDetail] = useState('Đang kết nối backend…');
+
   useEffect(() => {
+    const controller = new AbortController();
     appFetch('/api/hello')
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
+        return response.json() as Promise<{ message?: string }>;
       })
-      .then((result) => setMessage(String(result.message)))
-      .catch((error) => setMessage(`Backend error: ${String(error)}`));
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setStatus('ok');
+        setStatusDetail(result.message || 'Backend đã sẵn sàng.');
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setStatus('error');
+        setStatusDetail(`Không kết nối được backend: ${String(error)}`);
+      });
+    return () => controller.abort();
   }, [appFetch]);
+
   return (
-    <main className="starter-root starter-page" data-sota-app="inkline">
-      <p className="starter-eyebrow">Workspace toolkit</p>
-      <h1>Inkline</h1>
-      <p className="starter-status">{message}</p>
-      <p>Edit <code>src/ui/app.tsx</code>; Vite rebuilds into <code>dist/ui</code>.</p>
+    <main className="starter-root starter-page admin-page" data-sota-app="inkline">
+      <header className="admin-hero">
+        <p className="starter-eyebrow">Workspace toolkit</p>
+        <h1>Inkline</h1>
+        <p className="admin-lede">
+          Vẽ flowchart draw.io, UML sequence, và tra cứu web ngay trong chat. Gọi <strong>@ Inkline</strong>.
+        </p>
+        <p className={`admin-status admin-status-${status}`} role="status">
+          <span className="admin-status-dot" aria-hidden="true" />
+          {status === 'connecting' ? 'Đang kiểm tra backend…' : status === 'ok' ? 'Backend đã kết nối' : 'Backend lỗi'}
+        </p>
+        {status !== 'connecting' ? <p className="admin-status-detail">{statusDetail}</p> : null}
+      </header>
+
+      <section className="admin-grid" aria-label="Công cụ">
+        <article className="admin-card">
+          <p className="admin-card-kicker">generate-drawio</p>
+          <h2>Flowchart</h2>
+          <p>Sơ đồ quy trình, kiến trúc, yes/no. Tải file <code>.drawio</code>, mở trên diagrams.net.</p>
+          <PromptCopy label="Thử prompt flowchart" text={FLOW_PROMPT} />
+        </article>
+        <article className="admin-card">
+          <p className="admin-card-kicker">generate-sequencediagram</p>
+          <h2>Sequence</h2>
+          <p>Luồng request/response, if/else, loop, note. Tải <code>.drawio</code> và <code>.txt</code> (sequencediagram.org).</p>
+          <PromptCopy label="Thử prompt sequence" text={SEQUENCE_PROMPT} />
+        </article>
+        <article className="admin-card">
+          <p className="admin-card-kicker">web-search</p>
+          <h2>Web search</h2>
+          <p>App rewrite câu hỏi, rồi OpenAI web search, trả tóm tắt + nguồn về agent Sota.</p>
+          <PromptCopy label="Thử prompt search" text={SEARCH_PROMPT} />
+        </article>
+      </section>
+
+      <section className="admin-howto" aria-labelledby="admin-howto-title">
+        <h2 id="admin-howto-title">Cách dùng</h2>
+        <ol>
+          <li>Mở chat workspace, gõ <strong>@ Inkline</strong>.</li>
+          <li>Mô tả quy trình (flowchart), tương tác hệ thống (sequence), hoặc câu hỏi cần tra cứu web.</li>
+          <li>Tải file từ card kết quả, hoặc đọc tóm tắt + nguồn của web search.</li>
+        </ol>
+      </section>
     </main>
+  );
+}
+
+function PromptCopy({ label, text }: { label: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    void navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1600);
+      },
+      () => undefined,
+    );
+  }
+
+  return (
+    <div className="admin-prompt">
+      <p className="admin-prompt-text">{text}</p>
+      <button type="button" className="admin-copy" onClick={copy}>
+        {copied ? 'Đã copy' : label}
+      </button>
+    </div>
   );
 }
 
@@ -388,6 +480,70 @@ export function GenerateSequenceDiagramResult({
           mimeType={result.txtMimeType || 'text/plain'}
         />
       </div>
+    </ToolCard>
+  );
+}
+
+export function WebSearchResult({
+  toolResult,
+}: ToolResultSurfaceProps<WebSearchInput, WebSearchOutput>) {
+  if (toolResult.state === 'input-streaming') {
+    return (
+      <ToolCard status="Preparing search…" busy>
+        <WebSearchInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (
+    toolResult.state === 'input-available' ||
+    toolResult.state === 'output-pending' ||
+    toolResult.state === 'approval-requested'
+  ) {
+    return (
+      <ToolCard status="Searching the web…" busy>
+        <WebSearchInputPreview input={toolResult.input} />
+      </ToolCard>
+    );
+  }
+
+  if (toolResult.state === 'output-denied') {
+    return <ToolCard status="Web search was not approved." />;
+  }
+
+  if (toolResult.state === 'output-error') {
+    return <ToolCard status={toolResult.errorText ?? 'Could not complete web search.'} />;
+  }
+
+  if (toolResult.state !== 'output-available') return null;
+
+  const result = toolResult.result;
+  if (!result?.summary) {
+    return <ToolCard status="Could not complete web search." />;
+  }
+
+  return (
+    <ToolCard status="Web search">
+      <div className="generate-header">
+        <span className="analyze-badge">SEARCH</span>
+        <span className="analyze-file">{result.rewrittenQuery}</span>
+      </div>
+      {result.rewrittenQuery !== result.originalQuery ? (
+        <p className="count-preview">Original: {result.originalQuery}</p>
+      ) : null}
+      <p className="analyze-summary">{result.summary}</p>
+      {result.sources?.length ? (
+        <ul className="search-sources">
+          {result.sources.map((source) => (
+            <li key={source.url}>
+              <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+              <span className="search-source-host">{hostLabel(source.url)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="count-preview">No cited sources.</p>
+      )}
     </ToolCard>
   );
 }
@@ -698,6 +854,24 @@ function SequenceInputPreview({ input }: { input?: unknown }) {
   );
 }
 
+function WebSearchInputPreview({ input }: { input?: unknown }) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return <p className="count-preview">Waiting for the search query…</p>;
+  }
+  const query = typeof (input as Record<string, unknown>).query === 'string'
+    ? (input as Record<string, unknown>).query as string
+    : '';
+  return <p className="count-preview">{query || 'Waiting for the search query…'}</p>;
+}
+
+function hostLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
 function PdfInputPreview({ input }: { input?: unknown }) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return <p className="count-preview">Waiting for the model…</p>;
@@ -806,6 +980,7 @@ export const surfaces = {
   GenerateFileResult,
   GenerateDrawioResult,
   GenerateSequenceDiagramResult,
+  WebSearchResult,
   PdfResult,
   UploadFileResult,
   AnalyzeFileResult,

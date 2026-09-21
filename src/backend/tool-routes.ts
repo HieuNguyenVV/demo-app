@@ -8,7 +8,8 @@ import { handleGenerateSequenceDiagram } from './tool.generate-sequencediagram.j
 import { handleMeetingMinutes } from './tool.meeting-minutes.js';
 import { handlePdf, PlatformFileError } from './tool.pdf.js';
 import { handleUploadFile } from './tool.upload-file.js';
-import { InvalidToolInputError, isRecord } from './tool.shared.js';
+import { handleWebSearch } from './tool.web-search.js';
+import { InvalidToolInputError, UpstreamToolError, isRecord } from './tool.shared.js';
 import type { InvocationClaims } from './sota-auth.js';
 import { requireSotaInvocation } from './sota-auth.js';
 
@@ -23,6 +24,10 @@ export function registerToolRoutes(app: Express, appId: string) {
 
   app.post('/tools/generate-sequencediagram', requireSotaInvocation(appId, 'tool:generate-sequencediagram'), async (request, response) => {
     await respondWithTool(request, response, (input) => handleGenerateSequenceDiagram(input));
+  });
+
+  app.post('/tools/web-search', requireSotaInvocation(appId, 'tool:web-search'), async (request, response) => {
+    await respondWithTool(request, response, (input) => handleWebSearch(input));
   });
 
   app.post('/tools/pdf', requireSotaInvocation(appId, 'tool:pdf'), async (request, response) => {
@@ -61,6 +66,10 @@ async function respondWithTool(
   try {
     response.json(await handler(body?.input ?? body, response.locals.sota, token));
   } catch (error) {
+    if (error instanceof UpstreamToolError) {
+      response.status(error.status).json({ code: error.code, message: error.message });
+      return;
+    }
     if (error instanceof InvalidToolInputError) {
       response.status(error.status).json({ code: error.code, message: error.message });
       return;

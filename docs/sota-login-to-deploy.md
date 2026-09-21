@@ -84,7 +84,10 @@ Nếu `401 AUTH_SESSION_INVALID` / `No user context` trên `api.v4.stg...` → C
 ```yaml
 SOTA_CORE_ORIGIN: https://api.v4.sotaagents.ai
 SOTA_WEB_ORIGIN: https://app.sotaagents.ai
+OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 ```
+
+Đặt `OPENAI_API_KEY` trong `.env` trên VPS (không commit). Tool `web-search` rewrite query rồi gọi OpenAI web search.
 
 `service.baseUrl` / `health.url` trong manifest: `https://api.viet.it.com` (localhost chỉ nằm trong `environments.local`).
 

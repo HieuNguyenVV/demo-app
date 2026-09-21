@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["originalQuery", "rewrittenQuery", "summary", "sourceCount", "sources"],
+  "properties": {
+    "originalQuery": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400
+    },
+    "rewrittenQuery": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "Grounded answer for the Sota agent to use in chat."
+    },
+    "sourceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "url"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "url": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 500
+          }
+        }
+      }
+    }
+  }
+}

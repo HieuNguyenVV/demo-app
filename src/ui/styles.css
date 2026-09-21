@@ -193,6 +193,34 @@
   gap: 8px 18px;
 }
 
+[data-sota-app="inkline"] .search-sources {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+[data-sota-app="inkline"] .search-sources li {
+  display: grid;
+  gap: 2px;
+}
+
+[data-sota-app="inkline"] .search-sources a {
+  color: #1267e5;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+[data-sota-app="inkline"] .search-sources a:hover {
+  text-decoration: underline;
+}
+
+[data-sota-app="inkline"] .search-source-host {
+  color: color-mix(in srgb, currentColor 58%, transparent);
+  font-size: 12px;
+}
+
 [data-sota-app="inkline"] .generate-download {
   color: #1267e5;
   display: inline-block;
@@ -240,4 +268,137 @@
 [data-sota-app="inkline"] .minutes-meta {
   color: color-mix(in srgb, currentColor 64%, transparent);
   font-size: 12px;
+}
+
+[data-sota-app="inkline"].admin-page {
+  display: grid;
+  gap: 28px;
+  max-width: 880px;
+}
+
+[data-sota-app="inkline"] .admin-hero h1 {
+  margin: 8px 0 0;
+}
+
+[data-sota-app="inkline"] .admin-lede {
+  margin: 10px 0 0;
+  max-width: 42rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, currentColor 78%, transparent);
+}
+
+[data-sota-app="inkline"] .admin-status {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-sota-app="inkline"] .admin-status-dot {
+  background: color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  width: 8px;
+}
+
+[data-sota-app="inkline"] .admin-status-ok .admin-status-dot {
+  background: #16a34a;
+}
+
+[data-sota-app="inkline"] .admin-status-error .admin-status-dot {
+  background: #dc2626;
+}
+
+[data-sota-app="inkline"] .admin-status-connecting .admin-status-dot {
+  background: #ca8a04;
+}
+
+[data-sota-app="inkline"] .admin-status-detail {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: color-mix(in srgb, currentColor 64%, transparent);
+}
+
+[data-sota-app="inkline"] .admin-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+[data-sota-app="inkline"] .admin-card {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+[data-sota-app="inkline"] .admin-card h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+[data-sota-app="inkline"] .admin-card p {
+  margin: 0;
+  line-height: 1.45;
+  color: color-mix(in srgb, currentColor 76%, transparent);
+}
+
+[data-sota-app="inkline"] .admin-card-kicker {
+  color: #1267e5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+[data-sota-app="inkline"] .admin-prompt {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+[data-sota-app="inkline"] .admin-prompt-text {
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+[data-sota-app="inkline"] .admin-copy {
+  background: color-mix(in srgb, #1267e5 12%, transparent);
+  border: 0;
+  border-radius: 8px;
+  color: #1267e5;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  justify-self: start;
+  padding: 8px 12px;
+}
+
+[data-sota-app="inkline"] .admin-copy:hover {
+  background: color-mix(in srgb, #1267e5 20%, transparent);
+}
+
+[data-sota-app="inkline"] .admin-howto h2 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+
+[data-sota-app="inkline"] .admin-howto ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+[data-sota-app="inkline"] .admin-howto li {
+  margin-top: 8px;
+  line-height: 1.5;
 }

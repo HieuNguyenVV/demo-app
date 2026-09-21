@@ -9,7 +9,8 @@ Call `generate-drawio` when the user asks for a draw.io, diagrams.net, mxfile, f
 
 For a **sequence diagram**, UML sequence, request/response timeline, **if/else**, or **loop**, call `generate-sequencediagram` instead.
 
-Do not use `generate-file` for this. That tool cannot emit a valid `.drawio` file.
+Do not use this tool for sequence diagrams. Call `generate-sequencediagram` instead.
+Do not use this tool to search the web. Call `web-search` instead.
 
 ## Input rules (layout quality)
 

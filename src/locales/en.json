@@ -1,5 +1,9 @@
 {
   "admin.title": "Inkline",
+  "admin.lede": "Generate draw.io flowcharts, UML sequence diagrams, and live web search from chat.",
+  "tool.webSearch.title": "Web search",
+  "admin.status.ok": "Backend connected",
+  "admin.status.error": "Backend error",
   "tool.generateFile.title": "Generated file",
   "tool.generateFile.streaming": "Preparing file…",
   "tool.generateFile.running": "Generating file…",

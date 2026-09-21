@@ -8,6 +8,16 @@ export class InvalidToolInputError extends Error {
   }
 }
 
+export class UpstreamToolError extends Error {
+  readonly status = 502 as const;
+  readonly code = 'UPSTREAM_ERROR';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UpstreamToolError';
+  }
+}
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

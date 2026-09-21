@@ -1,20 +1,14 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.13
+version: 1.0.17
 displayName: Inkline
-description: "Office toolkit for PDFs, draw.io diagrams, and meeting minutes."
+description: "Draw.io diagrams, UML sequence diagrams, and web search."
 publisher:
   id: local-dev
   displayName: "Local Dev"
   contact: dev@local-dev.example
 contributes:
   skills:
-    - name: generate-file
-      description: When to call generate-file to create downloadable txt, md, json, csv, or pdf files.
-      appendsTo: system
-      content: src/skills/generate-file
-      timeoutMs: 3000
-      failure_mode: skip
     - name: generate-drawio
       description: When the user wants a draw.io / diagrams.net flowchart, architecture, or process diagram, call generate-drawio. For sequence / UML interaction diagrams call generate-sequencediagram.
       appendsTo: system
@@ -22,33 +16,20 @@ contributes:
       timeoutMs: 3000
       failure_mode: skip
     - name: generate-sequencediagram
-      description: When the user wants a sequence diagram, UML sequence, request/response timeline, if/else, loop, note, or parallel path, call generate-sequencediagram instead of generate-drawio or generate-file. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
+      description: When the user wants a sequence diagram, UML sequence, request/response timeline, if/else, loop, note, or parallel path, call generate-sequencediagram instead of generate-drawio. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
       appendsTo: system
       content: src/skills/generate-sequencediagram
       timeoutMs: 3000
       failure_mode: skip
-    - name: analyze-file
-      description: When the user attached a non-PDF chat file or pasted file content and asks to read, analyze, summarize, or review it, automatically call upload-file then analyze-file. Do not use for PDF attachments.
+    - name: web-search
+      description: When the user wants to search the web, look up current facts, news, or tra cứu thông tin, call web-search. Pass the user's question as query; the backend rewrites it and searches with OpenAI.
       appendsTo: system
-      content: src/skills/analyze-file
-      timeoutMs: 3000
-      failure_mode: skip
-    - name: meeting-minutes
-      description: Turn messy meeting notes into structured office minutes and a downloadable Word document (.docx).
-      appendsTo: system
-      content: src/skills/meeting-minutes
+      content: src/skills/web-search
       timeoutMs: 3000
       failure_mode: skip
   tools:
-    - name: generate-file
-      description: Generate a downloadable txt, md, json, csv, or pdf file from provided content. Use when the user asks to create, export, or save those formats. Do not use for draw.io flowcharts (generate-drawio) or sequence diagrams (generate-sequencediagram). Returns fileName, sizeBytes, lineCount, and file content for the UI download card. Use valid JSON for json, comma-separated rows for csv, and plain text for pdf.
-      route: POST /tools/generate-file
-      inputSchema: src/schemas/generate-file-input.schema.json
-      outputSchema: src/schemas/generate-file-output.schema.json
-      timeoutMs: 15000
-      failure_mode: abort
     - name: generate-drawio
-      description: Generate a downloadable draw.io (.drawio) flowchart or architecture diagram from nodes and edges. Do not use for UML sequence diagrams — call generate-sequencediagram. Do not use generate-file for this. Returns fileName, nodeCount, edgeCount, and XML for the download card.
+      description: Generate a downloadable draw.io (.drawio) flowchart or architecture diagram from nodes and edges. Do not use for UML sequence diagrams — call generate-sequencediagram. Returns fileName, nodeCount, edgeCount, and XML for the download card.
       route: POST /tools/generate-drawio
       inputSchema: src/schemas/generate-drawio-input.schema.json
       outputSchema: src/schemas/generate-drawio-output.schema.json
@@ -61,33 +42,12 @@ contributes:
       outputSchema: src/schemas/generate-sequencediagram-output.schema.json
       timeoutMs: 15000
       failure_mode: abort
-    - name: pdf
-      description: "Office PDF desk for existing PDFs (stamp/split, extract, or summarize). When the user wants a new PDF, call generate-file with format pdf. When the user attached a chat PDF, set source to platform, pass platformFileId, fileName, and the full attachment text in content when it is visible (same workaround as upload-file). Prefer fileId for a PDF this app already created."
-      route: POST /tools/pdf
-      inputSchema: src/schemas/pdf-input.schema.json
-      outputSchema: src/schemas/pdf-output.schema.json
-      timeoutMs: 20000
-      failure_mode: abort
-    - name: upload-file
-      description: Internal step 1 for reading user text files. Call automatically when the user attached a non-PDF chat file and wants it read or analyzed. Do not use for PDF attachments — call pdf instead. With a chat attachment, set source to platform, pass the attachment fileId as platformFileId, pass fileName such as todo.txt, and pass the full attachment text in content when it is visible in the conversation. With pasted text only, set source to content and pass the full content body.
-      route: POST /tools/upload-file
-      inputSchema: src/schemas/upload-file-input.schema.json
-      outputSchema: src/schemas/upload-file-output.schema.json
-      timeoutMs: 15000
-      failure_mode: abort
-    - name: analyze-file
-      description: Internal step 2 after upload-file. Call automatically when the user attached a chat file and asked to read, analyze, summarize, or review it. Requires the fileId returned by upload-file for the same workspace. Returns reading stats, summary, preview, and top keywords.
-      route: POST /tools/analyze-file
-      inputSchema: src/schemas/analyze-file-input.schema.json
-      outputSchema: src/schemas/analyze-file-output.schema.json
-      timeoutMs: 15000
-      failure_mode: abort
-    - name: meeting-minutes
-      description: Format office meeting notes into structured minutes and generate a downloadable Word document (.docx) in the same call. Use when the user asks for meeting minutes or biên bản họp. Set source to text with raw notes, or source to file with a fileId from upload-file after a chat attachment.
-      route: POST /tools/meeting-minutes
-      inputSchema: src/schemas/meeting-minutes-input.schema.json
-      outputSchema: src/schemas/meeting-minutes-output.schema.json
-      timeoutMs: 15000
+    - name: web-search
+      description: Rewrite the user's question into a search query, search the live web with OpenAI, and return a grounded summary plus source URLs for the Sota agent. Pass the original user question as query. Do not use for draw.io or sequence diagrams.
+      route: POST /tools/web-search
+      inputSchema: src/schemas/web-search-input.schema.json
+      outputSchema: src/schemas/web-search-output.schema.json
+      timeoutMs: 30000
       failure_mode: abort
   ui:
     - id: admin-screen
@@ -101,18 +61,6 @@ contributes:
         entry: dist/ui/app.js
         export: AdminScreen
         styles: dist/ui/app.css
-    - id: generate-file-result
-      kind: nativeModule
-      surface: tool-view
-      slot: chat.message.inline.below
-      label: Generated file
-      toolNames:
-        - generate-file
-      renderBeforeOutput: true
-      module:
-        entry: dist/ui/app.js
-        export: GenerateFileResult
-        styles: dist/ui/app.css
     - id: generate-drawio-result
       kind: nativeModule
       surface: tool-view
@@ -121,6 +69,7 @@ contributes:
       toolNames:
         - generate-drawio
       renderBeforeOutput: true
+      topLevelToolRender: true
       module:
         entry: dist/ui/app.js
         export: GenerateDrawioResult
@@ -133,57 +82,23 @@ contributes:
       toolNames:
         - generate-sequencediagram
       renderBeforeOutput: true
+      topLevelToolRender: true
       module:
         entry: dist/ui/app.js
         export: GenerateSequenceDiagramResult
         styles: dist/ui/app.css
-    - id: pdf-result
+    - id: web-search-result
       kind: nativeModule
       surface: tool-view
       slot: chat.message.inline.below
-      label: Office PDF
+      label: Web search
       toolNames:
-        - pdf
+        - web-search
       renderBeforeOutput: true
+      topLevelToolRender: true
       module:
         entry: dist/ui/app.js
-        export: PdfResult
-        styles: dist/ui/app.css
-    - id: upload-file-result
-      kind: nativeModule
-      surface: tool-view
-      slot: chat.message.inline.below
-      label: Uploaded file
-      toolNames:
-        - upload-file
-      renderBeforeOutput: true
-      module:
-        entry: dist/ui/app.js
-        export: UploadFileResult
-        styles: dist/ui/app.css
-    - id: analyze-file-result
-      kind: nativeModule
-      surface: tool-view
-      slot: chat.message.inline.below
-      label: File analysis
-      toolNames:
-        - analyze-file
-      renderBeforeOutput: true
-      module:
-        entry: dist/ui/app.js
-        export: AnalyzeFileResult
-        styles: dist/ui/app.css
-    - id: meeting-minutes-result
-      kind: nativeModule
-      surface: tool-view
-      slot: chat.message.inline.below
-      label: Meeting minutes
-      toolNames:
-        - meeting-minutes
-      renderBeforeOutput: true
-      module:
-        entry: dist/ui/app.js
-        export: MeetingMinutesResult
+        export: WebSearchResult
         styles: dist/ui/app.css
 service:
   baseUrl: https://api.viet.it.com
@@ -197,16 +112,6 @@ environments:
     health:
       url: http://localhost:8787/health
 platform: ^1.2.0
-input:
-  fileTypeAllowlistAdditions:
-    - mimeType: text/plain
-      extensions: [txt, md, log]
-    - mimeType: text/csv
-      extensions: [csv]
-    - mimeType: application/json
-      extensions: [json]
-    - mimeType: application/pdf
-      extensions: [pdf]
 locales:
   default: en
   files:
