@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.21
+version: 1.0.22
 displayName: Inkline
 description: "Draw.io diagrams, UML sequence diagrams, and web search."
 publisher:

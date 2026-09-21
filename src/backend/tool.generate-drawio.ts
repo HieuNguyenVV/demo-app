@@ -1,4 +1,5 @@
-import { drawFlowchartSvg, parseDiagramPrompt, wrapSvgAsDrawio } from './openai-diagram.js';
+import { buildDrawioPreviewSvg, buildDrawioXml } from './drawio.js';
+import { designFlowchart, parseDiagramPrompt } from './openai-diagram.js';
 import { UpstreamToolError } from './tool.shared.js';
 
 const MIME_TYPE = 'application/vnd.jgraph.mxfile';
@@ -24,8 +25,13 @@ export type GenerateDrawioResult = {
 export async function handleGenerateDrawio(input: unknown): Promise<GenerateDrawioResult> {
   const request = parseDiagramPrompt(input);
   try {
-    const drawn = await drawWithRepair(request.prompt);
-    const content = wrapSvgAsDrawio(drawn.svg, request.title || drawn.title);
+    const designed = await designWithRepair(request.prompt);
+    const diagram = {
+      ...designed,
+      title: request.title || designed.title,
+    };
+    const content = buildDrawioXml(diagram);
+    const previewSvg = buildDrawioPreviewSvg(diagram);
     const fileName = `${request.baseName}.drawio`;
     return {
       fileName,
@@ -33,11 +39,11 @@ export async function handleGenerateDrawio(input: unknown): Promise<GenerateDraw
       mimeType: MIME_TYPE,
       contentEncoding: 'text',
       sizeBytes: Buffer.byteLength(content, 'utf8'),
-      nodeCount: drawn.nodeCount,
-      edgeCount: drawn.edgeCount,
-      summary: `OpenAI drew ${fileName} (${drawn.nodeCount} shapes). Download and open in diagrams.net.`,
+      nodeCount: diagram.nodes.length,
+      edgeCount: diagram.edges.length,
+      summary: `Generated ${fileName} with ${diagram.nodes.length} shapes and ${diagram.edges.length} connectors. Open in diagrams.net / draw.io.`,
       content,
-      previewSvg: drawn.svg,
+      previewSvg,
       _sota: {
         modelProjection: {
           omitKeys: ['content', 'previewSvg'],
@@ -49,15 +55,15 @@ export async function handleGenerateDrawio(input: unknown): Promise<GenerateDraw
   }
 }
 
-async function drawWithRepair(prompt: string) {
+async function designWithRepair(prompt: string) {
   try {
-    return await drawFlowchartSvg(prompt);
+    return await designFlowchart(prompt);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('OPENAI_API_KEY') || message.includes('Timeout') || message.includes('aborted')) {
       throw error;
     }
-    return await drawFlowchartSvg(prompt, message.slice(0, 240));
+    return await designFlowchart(prompt, message.slice(0, 240));
   }
 }
 
@@ -69,5 +75,5 @@ function wrapOpenAiError(error: unknown): never {
   if (/timeout|aborted/i.test(message)) {
     throw new UpstreamToolError('OpenAI diagram timed out. Try a shorter prompt.');
   }
-  throw new UpstreamToolError(`OpenAI could not draw the diagram: ${message.slice(0, 160)}`);
+  throw new UpstreamToolError(`OpenAI could not design the diagram: ${message.slice(0, 160)}`);
 }

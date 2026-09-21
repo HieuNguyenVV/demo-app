@@ -11,7 +11,7 @@ For a **sequence diagram**, UML sequence, request/response timeline, **if/else**
 
 Do not use this tool to search the web. Call `inkline-search` instead.
 
-OpenAI **draws** the diagram. Pass the user's request through; do not invent `nodes` or `edges`.
+OpenAI **designs** the flowchart (boxes, decisions, connectors). The app writes real draw.io shapes so the `.drawio` file opens and is editable. Do not invent `nodes` or `edges`.
 
 ## Input
 

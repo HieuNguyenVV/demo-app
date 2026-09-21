@@ -5,6 +5,8 @@ export type DrawioNode = {
   id: string;
   label: string;
   kind: DrawioNodeKind;
+  x?: number;
+  y?: number;
 };
 
 export type DrawioEdge = {
@@ -179,6 +181,8 @@ export function buildDrawioPreviewSvg(diagram: DrawioDiagram): string {
 }
 
 function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } {
+  const fromCoords = layoutFromCoords(diagram);
+  if (fromCoords) return fromCoords;
   const layers = rankLayers(diagram);
   const maxLayer = Math.max(0, ...layers.map((layer) => layer.length));
   const horizontal = diagram.direction === 'left-right';
@@ -186,6 +190,37 @@ function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: nu
     return layoutSugiyama(diagram, horizontal);
   }
   return layoutBalancedFlow(diagram, horizontal);
+}
+
+function layoutFromCoords(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } | undefined {
+  if (!diagram.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))) {
+    return undefined;
+  }
+  const titleOffset = diagram.title.trim() ? TITLE_HEIGHT : 0;
+  const placed: PlacedNode[] = diagram.nodes.map((node) => {
+    const size = nodeSize(node.kind);
+    return {
+      ...node,
+      ...size,
+      x: snap(Math.max(MARGIN, node.x ?? MARGIN)),
+      y: snap(Math.max(MARGIN + titleOffset, node.y ?? MARGIN)),
+    };
+  });
+  for (let i = 0; i < placed.length; i += 1) {
+    for (let j = i + 1; j < placed.length; j += 1) {
+      const a = placed[i];
+      const b = placed[j];
+      if (a.x < b.x + b.width - 12 && a.x + a.width > b.x + 12
+        && a.y < b.y + b.height - 12 && a.y + a.height > b.y + 12) {
+        return undefined;
+      }
+    }
+  }
+  return {
+    nodes: placed,
+    width: snap(Math.max(...placed.map((node) => node.x + node.width), 400) + MARGIN),
+    height: snap(Math.max(...placed.map((node) => node.y + node.height), 300) + MARGIN),
+  };
 }
 
 function layoutBalancedFlow(

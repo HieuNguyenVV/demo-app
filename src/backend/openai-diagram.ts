@@ -1,20 +1,17 @@
+import type { DrawioDiagram, DrawioDirection, DrawioNodeKind } from './drawio.js';
 import { extractOutputText, openaiResponses, parseJsonObject, requireOpenAi } from './openai-client.js';
 import { InvalidToolInputError, isRecord } from './tool.shared.js';
 
-const DIAGRAM_TIMEOUT_MS = 25000;
+const DIAGRAM_TIMEOUT_MS = 20000;
 const FILE_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const NODE_ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
+const KINDS = ['process', 'decision', 'start', 'end', 'data'] as const;
+const DIRECTIONS = ['top-down', 'left-right'] as const;
 
 export type DiagramPrompt = {
   baseName: string;
   title: string;
   prompt: string;
-};
-
-export type OpenAiFlowchart = {
-  title: string;
-  svg: string;
-  nodeCount: number;
-  edgeCount: number;
 };
 
 export function parseDiagramPrompt(input: unknown): DiagramPrompt {
@@ -41,123 +38,100 @@ export function parseDiagramPrompt(input: unknown): DiagramPrompt {
   };
 }
 
-export async function drawFlowchartSvg(prompt: string, repair?: string): Promise<OpenAiFlowchart> {
+export async function designFlowchart(prompt: string, repair?: string): Promise<DrawioDiagram> {
   const data = await requestDiagramJson([
-    'Draw a polished flowchart as a self-contained SVG. Output JSON only.',
-    'Shape: {"title":"string","svg":"<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1100 900\\">...</svg>","nodeCount":8,"edgeCount":9}',
-    'Visual rules:',
-    '- Generous spacing (at least 48px between shapes). Align on a grid. No overlapping boxes or labels.',
-    '- White background. Rounded process boxes, stadium start/end, diamond decisions, parallelogram data.',
-    '- Colors: process #DAE8FC/#6C8EBF, decision #FFF2CC/#D6B656, start #D5E8D4/#82B366, end #F8CECC/#B85450, data #E1D5E7/#9673A6.',
-    '- Orthogonal connectors with arrowheads. Label yes/no on decision branches.',
-    '- font-family: "Segoe UI", Helvetica, sans-serif. Labels 1-6 words. Vietnamese is fine.',
-    '- Inline attributes only (no CSS classes, no images, no script). Keep SVG under 60KB.',
-    '- Include width, height, and viewBox on <svg>. Draw the full diagram the user asked for.',
+    'Design a complete flowchart. Output JSON only, no markdown.',
+    'Shape: {"title":"Duyệt nghỉ phép","direction":"top-down","nodes":[{"id":"start","label":"Bắt đầu","kind":"start","x":300,"y":40},{"id":"ask","label":"Quản lý phê duyệt?","kind":"decision","x":320,"y":220}],"edges":[{"from":"start","to":"ask"},{"from":"ask","to":"hr","label":"Có"},{"from":"ask","to":"reject","label":"Không"}]}',
+    'Rules:',
+    '- 4 to 16 nodes, every node on a path from start to an end. No floating boxes. No dangling arrows.',
+    '- kind: start (one), end (at least one), decision (diamonds), process, data.',
+    '- Decision nodes MUST use kind=decision. Each decision has exactly two outgoing edges labeled Có/Không or Yes/No.',
+    '- Top-down: main path shares x≈300. Yes/Có branch to the right (x≈560). Vertical gap ≥ 90. Grid 20. x,y are top-left.',
+    '- Short labels, 1-6 words, Vietnamese is fine. Unique ids. edges.from/to must be node ids.',
+    '- Do not invent unrelated systems.',
     '',
     `User request: ${prompt}`,
-    repair ? `Fix this problem: ${repair}` : '',
+    repair ? `Fix this validation error: ${repair}` : '',
   ].filter(Boolean).join('\n'));
-  const svg = sanitizeSvg(asString(data.svg, 'svg'));
-  return {
-    title: asString(data.title, 'title').slice(0, 80) || 'Flowchart',
-    svg,
-    nodeCount: Math.max(1, asCount(data.nodeCount) || countTags(svg, 'rect|ellipse|circle|polygon')),
-    edgeCount: Math.max(0, asCount(data.edgeCount) || countTags(svg, 'path|line|polyline')),
-  };
+  return parseDesignedDiagram(data);
 }
 
 async function requestDiagramJson(input: string): Promise<Record<string, unknown>> {
   const { apiKey, model } = requireOpenAi();
-  const payload = await openaiResponses(apiKey, { model, input, max_output_tokens: 16000 }, DIAGRAM_TIMEOUT_MS);
+  const payload = await openaiResponses(apiKey, { model, input, max_output_tokens: 4000 }, DIAGRAM_TIMEOUT_MS);
   return parseJsonObject(extractOutputText(payload));
 }
 
-export function sanitizeSvg(raw: string): string {
-  const match = raw.match(/<svg\b[\s\S]*<\/svg>/i);
-  if (!match) {
-    throw new Error('OpenAI did not return an SVG diagram');
+function parseDesignedDiagram(data: Record<string, unknown>): DrawioDiagram {
+  const title = typeof data.title === 'string' ? data.title.trim().slice(0, 80) : '';
+  const direction = parseDirection(data.direction);
+  const nodes = parseNodes(data.nodes);
+  const edges = parseEdges(data.edges, new Set(nodes.map((node) => node.id)));
+  return { title, direction, nodes, edges };
+}
+
+function parseDirection(value: unknown): DrawioDirection {
+  if (value === undefined) return 'top-down';
+  if (typeof value !== 'string' || !DIRECTIONS.includes(value as DrawioDirection)) {
+    throw new Error('direction must be top-down or left-right');
   }
-  let svg = match[0]
-    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
-    .replace(/<foreignObject\b[\s\S]*?<\/foreignObject>/gi, '')
-    .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript:/gi, '');
-  if (!/\sxmlns=/.test(svg.slice(0, 280))) {
-    svg = svg.replace(/<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  return value as DrawioDirection;
+}
+
+function parseNodes(value: unknown): DrawioDiagram['nodes'] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 40) {
+    throw new Error('nodes must be an array of 1 to 40 items');
   }
-  if (svg.length < 80) {
-    throw new Error('OpenAI SVG is empty');
+  const ids = new Set<string>();
+  return value.map((item, index) => {
+    if (!isRecord(item) || typeof item.id !== 'string' || !NODE_ID_PATTERN.test(item.id)) {
+      throw new Error(`nodes[${index}].id is invalid`);
+    }
+    if (ids.has(item.id)) {
+      throw new Error(`nodes[${index}].id is duplicated`);
+    }
+    if (typeof item.label !== 'string' || item.label.length < 1 || item.label.length > 80) {
+      throw new Error(`nodes[${index}].label must be 1 to 80 characters`);
+    }
+    const kind = parseKind(item.kind, index);
+    ids.add(item.id);
+    const x = asCoord(item.x);
+    const y = asCoord(item.y);
+    return { id: item.id, label: item.label.trim(), kind, ...(x !== undefined ? { x } : {}), ...(y !== undefined ? { y } : {}) };
+  });
+}
+
+function parseKind(value: unknown, index: number): DrawioNodeKind {
+  if (value === undefined) return 'process';
+  if (typeof value !== 'string' || !KINDS.includes(value as DrawioNodeKind)) {
+    throw new Error(`nodes[${index}].kind must be process, decision, start, end, or data`);
   }
-  if (svg.length > 70000) {
-    throw new Error('OpenAI SVG is too large');
+  return value as DrawioNodeKind;
+}
+
+function parseEdges(value: unknown, nodeIds: Set<string>): DrawioDiagram['edges'] {
+  if (!Array.isArray(value) || value.length > 80) {
+    throw new Error('edges must be an array of up to 80 items');
   }
-  return svg;
+  return value.map((item, index) => {
+    if (!isRecord(item) || typeof item.from !== 'string' || typeof item.to !== 'string') {
+      throw new Error(`edges[${index}] must include from and to`);
+    }
+    if (!nodeIds.has(item.from) || !nodeIds.has(item.to)) {
+      throw new Error(`edges[${index}] must reference existing node ids`);
+    }
+    if (item.label !== undefined && (typeof item.label !== 'string' || item.label.length > 40)) {
+      throw new Error(`edges[${index}].label must be a string up to 40 characters`);
+    }
+    return {
+      from: item.from,
+      to: item.to,
+      label: typeof item.label === 'string' && item.label.trim() ? item.label.trim() : undefined,
+    };
+  });
 }
 
-export function wrapSvgAsDrawio(svg: string, title: string): string {
-  const { width, height } = readSvgSize(svg);
-  const href = `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
-  const page = escapeXml(title || 'Page-1');
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<mxfile host="Inkline" type="device">',
-    `  <diagram name="${page}" id="page-1">`,
-    `    <mxGraphModel dx="${width}" dy="${height}" grid="1" gridSize="10" guides="1" page="1" pageScale="1" pageWidth="${width}" pageHeight="${height}">`,
-    '      <root>',
-    '        <mxCell id="0"/>',
-    '        <mxCell id="1" parent="0"/>',
-    `        <mxCell id="diagram" value="" style="shape=image;html=1;imageAspect=0;aspect=fixed;image=${escapeXml(href)}" vertex="1" parent="1">`,
-    `          <mxGeometry width="${width}" height="${height}" as="geometry"/>`,
-    '        </mxCell>',
-    '      </root>',
-    '    </mxGraphModel>',
-    '  </diagram>',
-    '</mxfile>',
-    '',
-  ].join('\n');
-}
-
-function readSvgSize(svg: string): { width: number; height: number } {
-  const open = svg.match(/<svg\b[^>]*>/i)?.[0] ?? '';
-  const viewBox = /viewBox\s*=\s*["']\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/i.exec(open);
-  const width = numberAttr(open, 'width') ?? (viewBox ? Number(viewBox[1]) : 1100);
-  const height = numberAttr(open, 'height') ?? (viewBox ? Number(viewBox[2]) : 800);
-  return {
-    width: clamp(Math.round(width), 400, 2400),
-    height: clamp(Math.round(height), 300, 2400),
-  };
-}
-
-function numberAttr(open: string, name: string): number | undefined {
-  const match = new RegExp(`\\s${name}\\s*=\\s*["']([\\d.]+)`, 'i').exec(open);
-  return match ? Number(match[1]) : undefined;
-}
-
-function asString(value: unknown, field: string): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`OpenAI JSON is missing ${field}`);
-  }
-  return value.trim();
-}
-
-function asCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : 0;
-}
-
-function countTags(svg: string, names: string): number {
-  return (svg.match(new RegExp(`<(?:${names})\\b`, 'gi')) ?? []).length;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (!Number.isFinite(value)) return min;
-  return Math.min(max, Math.max(min, value));
-}
-
-function escapeXml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+function asCoord(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return Math.max(0, Math.min(2000, Math.round(value)));
 }
