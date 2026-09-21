@@ -32,19 +32,19 @@ const SIDE_W = BOX_W;
 const SIDE_GAP = 24;
 const STRIP_GAP = 48;
 const NODE_GAP = 26;
-const GAP_X = 56;
-const GAP_Y = 36;
-const MARGIN = 36;
+const GAP_X = 88;
+const GAP_Y = 80;
+const MARGIN = 48;
 const TITLE_HEIGHT = 40;
 const GRID = 10;
-const LOOP_GUTTER = 32;
+const LOOP_GUTTER = 56;
 
 const KIND_SIZE: Record<DrawioNodeKind, Size> = {
-  process: { width: BOX_W, height: 56 },
-  decision: { width: 100, height: 100 },
-  start: { width: BOX_W, height: 50 },
-  end: { width: BOX_W, height: 50 },
-  data: { width: BOX_W, height: 56 },
+  process: { width: BOX_W, height: 64 },
+  decision: { width: 120, height: 120 },
+  start: { width: BOX_W, height: 52 },
+  end: { width: BOX_W, height: 52 },
+  data: { width: BOX_W, height: 64 },
 };
 
 const NODE_STYLES: Record<DrawioNodeKind, string> = {
@@ -181,45 +181,96 @@ export function buildDrawioPreviewSvg(diagram: DrawioDiagram): string {
 }
 
 function layoutDiagram(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } {
-  const fromCoords = layoutFromCoords(diagram);
-  if (fromCoords) return fromCoords;
-  const layers = rankLayers(diagram);
-  const maxLayer = Math.max(0, ...layers.map((layer) => layer.length));
-  const horizontal = diagram.direction === 'left-right';
-  if (maxLayer >= 3) {
-    return layoutSugiyama(diagram, horizontal);
+  if (diagram.direction === 'left-right') {
+    const layers = rankLayers(diagram);
+    const maxLayer = Math.max(0, ...layers.map((layer) => layer.length));
+    if (maxLayer >= 3) return layoutSugiyama(diagram, true);
+    return layoutBalancedFlow(diagram, true);
   }
-  return layoutBalancedFlow(diagram, horizontal);
+  return layoutFlowchartColumns(diagram);
 }
 
-function layoutFromCoords(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } | undefined {
-  if (!diagram.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))) {
-    return undefined;
+function layoutFlowchartColumns(diagram: DrawioDiagram): { nodes: PlacedNode[]; width: number; height: number } {
+  const layers = rankLayers(diagram);
+  const rankOf = new Map<string, number>();
+  layers.forEach((layer, rank) => {
+    for (const id of layer) rankOf.set(id, rank);
+  });
+  const spine = pickSpinePath(diagram, rankOf);
+  const spineSet = new Set(spine);
+  const column = new Map<string, number>();
+  for (const id of spine) column.set(id, 0);
+
+  for (const id of spine) {
+    for (const edge of diagram.edges.filter((item) => item.from === id && !spineSet.has(item.to))) {
+      if (column.has(edge.to)) continue;
+      column.set(edge.to, isNegative(edge.label) ? -1 : 1);
+    }
   }
+
+  let progress = true;
+  while (progress) {
+    progress = false;
+    for (const edge of diagram.edges) {
+      if (!column.has(edge.from) || column.has(edge.to)) continue;
+      const fromRank = rankOf.get(edge.from) ?? 0;
+      const toRank = rankOf.get(edge.to) ?? 0;
+      if (toRank < fromRank) continue;
+      column.set(edge.to, column.get(edge.from) ?? 0);
+      progress = true;
+    }
+  }
+  for (const node of diagram.nodes) {
+    if (!column.has(node.id)) column.set(node.id, 1);
+  }
+
+  layers.forEach((layer) => {
+    const used = new Set<number>();
+    const ordered = [...layer].sort((left, right) => {
+      const spineDelta = Number(spineSet.has(right)) - Number(spineSet.has(left));
+      if (spineDelta !== 0) return spineDelta;
+      return (column.get(left) ?? 0) - (column.get(right) ?? 0);
+    });
+    for (const id of ordered) {
+      let col = column.get(id) ?? 0;
+      if (used.has(col)) {
+        const preferRight = col >= 0;
+        let offset = 1;
+        let next = preferRight ? col + 1 : col - 1;
+        while (used.has(next) && offset < 8) {
+          offset += 1;
+          next = preferRight ? col + offset : col - offset;
+        }
+        col = next;
+        column.set(id, col);
+      }
+      used.add(col);
+    }
+  });
+
+  const cols = [...column.values()];
+  const minCol = Math.min(...cols, 0);
+  const colWidth = BOX_W + GAP_X;
+  const rowHeight = KIND_SIZE.decision.height + GAP_Y;
   const titleOffset = diagram.title.trim() ? TITLE_HEIGHT : 0;
   const placed: PlacedNode[] = diagram.nodes.map((node) => {
     const size = nodeSize(node.kind);
+    const col = (column.get(node.id) ?? 0) - minCol;
+    const rank = rankOf.get(node.id) ?? 0;
+    const cellX = MARGIN + col * colWidth;
+    const cellY = MARGIN + titleOffset + rank * rowHeight;
     return {
       ...node,
       ...size,
-      x: snap(Math.max(MARGIN, node.x ?? MARGIN)),
-      y: snap(Math.max(MARGIN + titleOffset, node.y ?? MARGIN)),
+      x: snap(cellX + (BOX_W - size.width) / 2),
+      y: snap(cellY + Math.max(0, (KIND_SIZE.decision.height - size.height) / 2)),
     };
   });
-  for (let i = 0; i < placed.length; i += 1) {
-    for (let j = i + 1; j < placed.length; j += 1) {
-      const a = placed[i];
-      const b = placed[j];
-      if (a.x < b.x + b.width - 12 && a.x + a.width > b.x + 12
-        && a.y < b.y + b.height - 12 && a.y + a.height > b.y + 12) {
-        return undefined;
-      }
-    }
-  }
+
   return {
     nodes: placed,
-    width: snap(Math.max(...placed.map((node) => node.x + node.width), 400) + MARGIN),
-    height: snap(Math.max(...placed.map((node) => node.y + node.height), 300) + MARGIN),
+    width: snap(MARGIN * 2 + (Math.max(...cols, 0) - minCol + 1) * colWidth),
+    height: snap(MARGIN + titleOffset + Math.max(layers.length, 1) * rowHeight + MARGIN),
   };
 }
 
@@ -614,8 +665,6 @@ function edgeCell(edge: DrawioEdge, index: number, diagram: DrawioDiagram, nodes
   const ports = from && to
     ? edgePorts(from, to, diagram.direction)
     : { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
-  const bounds = { bottom: Math.max(...nodes.map((node) => node.y + node.height), 0) };
-  const points = from && to ? routePoints(from, to, ports, bounds) : [];
   const label = edge.label ? ` value="${escapeXml(edge.label)}"` : '';
   const style = [
     'edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;',
@@ -623,17 +672,11 @@ function edgeCell(edge: DrawioEdge, index: number, diagram: DrawioDiagram, nodes
     `fontFamily=${FONT};fontSize=12;fontColor=#2D3748;fontStyle=1;labelBackgroundColor=#FFFFFF;`,
     `exitX=${ports.exitX};exitY=${ports.exitY};exitDx=0;exitDy=0;`,
     `entryX=${ports.entryX};entryY=${ports.entryY};entryDx=0;entryDy=0;`,
+    'noEdgeStyle=0;orthogonal=1;',
   ].join('');
   const geometry = [
     '          <mxGeometry relative="1" as="geometry">',
-    ...(points.length > 0
-      ? [
-        '            <Array as="points">',
-        ...points.map((point) => `              <mxPoint x="${point.x}" y="${point.y}"/>`),
-        '            </Array>',
-      ]
-      : []),
-    ...(edge.label ? ['            <mxPoint x="12" y="-10" as="offset"/>'] : []),
+    ...(edge.label ? ['            <mxPoint x="12" y="-12" as="offset"/>'] : []),
     '          </mxGeometry>',
   ].join('\n');
   return [
@@ -646,48 +689,29 @@ function edgeCell(edge: DrawioEdge, index: number, diagram: DrawioDiagram, nodes
 function edgePorts(from: PlacedNode, to: PlacedNode, direction: DrawioDirection) {
   const fromCx = from.x + from.width / 2;
   const toCx = to.x + to.width / 2;
-  const fromCy = from.y + from.height / 2;
-  const toCy = to.y + to.height / 2;
   const dx = toCx - fromCx;
-  const dy = toCy - fromCy;
 
   if (direction === 'left-right') {
-    if (to.x + to.width < from.x - 16 && to.y > from.y + from.height + 12) {
+    if (to.x >= from.x + from.width - 8) {
+      return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
+    }
+    if (to.y > from.y + from.height + 12) {
       return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
     }
-    if (to.x + to.width < from.x - 16) {
-      return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 1 };
-    }
-    if (Math.abs(dy) > 40 && dx > 24) {
-      return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
-    }
-    if (to.y > from.y + from.height + 16) {
-      return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
-    }
-    if (to.y + to.height < from.y - 16) {
-      return { exitX: 0.5, exitY: 0, entryX: 0.5, entryY: 1 };
-    }
-    return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
-  }
-
-  if (dx > 40 && to.y + to.height < from.y - 8) {
-    return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
-  }
-  if (dx < -40 && Math.abs(fromCy - toCy) > 40) {
     return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 1 };
   }
-  if (dy < -20) {
-    return { exitX: 1, exitY: 0.5, entryX: 1, entryY: 0.5 };
+
+  if (to.y >= from.y + from.height - 4) {
+    if (Math.abs(dx) < 36) return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
+    if (dx > 0) return { exitX: 1, exitY: 0.5, entryX: 0.5, entryY: 0 };
+    return { exitX: 0, exitY: 0.5, entryX: 0.5, entryY: 0 };
   }
-  if (dx > 24 && Math.abs(fromCy - toCy) < 56) {
-    return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
+  if (to.y + to.height <= from.y + 8) {
+    if (dx >= 0) return { exitX: 1, exitY: 0.5, entryX: 1, entryY: 0.5 };
+    return { exitX: 0, exitY: 0.5, entryX: 0, entryY: 0.5 };
   }
-  if (dx < -24 && Math.abs(fromCy - toCy) < 56) {
-    return { exitX: 0, exitY: 0.5, entryX: 1, entryY: 0.5 };
-  }
-  if (dx > 40) {
-    return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
-  }
+  if (dx > 24) return { exitX: 1, exitY: 0.5, entryX: 0, entryY: 0.5 };
+  if (dx < -24) return { exitX: 0, exitY: 0.5, entryX: 1, entryY: 0.5 };
   return { exitX: 0.5, exitY: 1, entryX: 0.5, entryY: 0 };
 }
 
@@ -702,44 +726,44 @@ function routePoints(
   const x2 = to.x + to.width * ports.entryX;
   const y2 = to.y + to.height * ports.entryY;
 
-  if (ports.exitX === 1 && ports.entryX === 1) {
-    const gutter = snap(Math.max(from.x + from.width, to.x + to.width) + LOOP_GUTTER);
+  if (ports.exitX === ports.entryX && (ports.exitX === 0 || ports.exitX === 1)) {
+    const gutter = ports.exitX === 1
+      ? snap(Math.max(from.x + from.width, to.x + to.width) + LOOP_GUTTER)
+      : snap(Math.min(from.x, to.x) - LOOP_GUTTER);
     return [
       { x: gutter, y: snap(y1) },
       { x: gutter, y: snap(y2) },
     ];
   }
-  if (ports.exitY === 1 && ports.entryY === 1) {
-    const bottom = snap(Math.max(from.y + from.height, to.y + to.height, bounds?.bottom ?? 0) + LOOP_GUTTER);
-    if (to.x + to.width < from.x) {
-      const right = snap(from.x + from.width + LOOP_GUTTER);
-      const left = snap(Math.max(12, to.x - LOOP_GUTTER));
-      return [
-        { x: right, y: snap(y1) },
-        { x: right, y: bottom },
-        { x: left, y: bottom },
-        { x: left, y: snap(y2) },
-      ];
-    }
-    return [
-      { x: snap(x1), y: bottom },
-      { x: snap(x2), y: bottom },
-    ];
-  }
-  if (ports.exitX === 1 && ports.entryX === 0 && to.x > from.x + from.width) {
-    if (Math.abs(y1 - y2) < 10) return [];
-    const gutter = snap((from.x + from.width + to.x) / 2);
-    return [
-      { x: gutter, y: snap(y1) },
-      { x: gutter, y: snap(y2) },
-    ];
-  }
-  if (ports.exitY === 1 && ports.entryY === 0 && to.y > from.y + from.height) {
-    if (Math.abs(x1 - x2) < 10) return [];
+  if (ports.exitY === 1 && ports.entryY === 0) {
+    if (Math.abs(x1 - x2) < 8) return [];
     const midY = snap((from.y + from.height + to.y) / 2);
     return [
       { x: snap(x1), y: midY },
       { x: snap(x2), y: midY },
+    ];
+  }
+  if (ports.exitX === 1 && ports.entryX === 0) {
+    if (Math.abs(y1 - y2) < 8) return [];
+    const midX = snap((from.x + from.width + to.x) / 2);
+    return [
+      { x: midX, y: snap(y1) },
+      { x: midX, y: snap(y2) },
+    ];
+  }
+  if (ports.exitX === 0 && ports.entryX === 1) {
+    if (Math.abs(y1 - y2) < 8) return [];
+    const midX = snap((to.x + to.width + from.x) / 2);
+    return [
+      { x: midX, y: snap(y1) },
+      { x: midX, y: snap(y2) },
+    ];
+  }
+  if (ports.exitY === 1 && ports.entryY === 1) {
+    const bottom = snap(Math.max(from.y + from.height, to.y + to.height, bounds?.bottom ?? 0) + LOOP_GUTTER);
+    return [
+      { x: snap(x1), y: bottom },
+      { x: snap(x2), y: bottom },
     ];
   }
   return [];

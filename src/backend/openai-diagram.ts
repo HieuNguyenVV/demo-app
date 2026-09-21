@@ -40,15 +40,15 @@ export function parseDiagramPrompt(input: unknown): DiagramPrompt {
 
 export async function designFlowchart(prompt: string, repair?: string): Promise<DrawioDiagram> {
   const data = await requestDiagramJson([
-    'Design a complete flowchart. Output JSON only, no markdown.',
-    'Shape: {"title":"Duyệt nghỉ phép","direction":"top-down","nodes":[{"id":"start","label":"Bắt đầu","kind":"start","x":300,"y":40},{"id":"ask","label":"Quản lý phê duyệt?","kind":"decision","x":320,"y":220}],"edges":[{"from":"start","to":"ask"},{"from":"ask","to":"hr","label":"Có"},{"from":"ask","to":"reject","label":"Không"}]}',
+    'Design a complete flowchart. Output JSON only, no markdown. Do not include x or y.',
+    'Shape: {"title":"Duyệt nghỉ phép","direction":"top-down","nodes":[{"id":"start","label":"Bắt đầu","kind":"start"},{"id":"ask","label":"Quản lý phê duyệt?","kind":"decision"}],"edges":[{"from":"start","to":"ask"},{"from":"ask","to":"hr","label":"Có"},{"from":"ask","to":"reject","label":"Không"}]}',
     'Rules:',
-    '- 4 to 16 nodes, every node on a path from start to an end. No floating boxes. No dangling arrows.',
-    '- kind: start (one), end (at least one), decision (diamonds), process, data.',
-    '- Decision nodes MUST use kind=decision. Each decision has exactly two outgoing edges labeled Có/Không or Yes/No.',
-    '- Top-down: main path shares x≈300. Yes/Có branch to the right (x≈560). Vertical gap ≥ 90. Grid 20. x,y are top-left.',
+    '- 4 to 16 nodes. One start, at least one end. Every node on a path from start to an end.',
+    '- Keep a single main happy path. Side branches only for Có/Không (or Yes/No).',
+    '- kind: start | end | decision | process | data. Decision nodes MUST be kind=decision.',
+    '- Each decision has exactly two outgoing edges labeled Có/Không or Yes/No. No extra unlabeled branches from a decision.',
     '- Short labels, 1-6 words, Vietnamese is fine. Unique ids. edges.from/to must be node ids.',
-    '- Do not invent unrelated systems.',
+    '- Prefer fewer crossing loops. Do not invent unrelated systems.',
     '',
     `User request: ${prompt}`,
     repair ? `Fix this validation error: ${repair}` : '',
@@ -95,9 +95,7 @@ function parseNodes(value: unknown): DrawioDiagram['nodes'] {
     }
     const kind = parseKind(item.kind, index);
     ids.add(item.id);
-    const x = asCoord(item.x);
-    const y = asCoord(item.y);
-    return { id: item.id, label: item.label.trim(), kind, ...(x !== undefined ? { x } : {}), ...(y !== undefined ? { y } : {}) };
+    return { id: item.id, label: item.label.trim(), kind };
   });
 }
 
@@ -129,9 +127,4 @@ function parseEdges(value: unknown, nodeIds: Set<string>): DrawioDiagram['edges'
       label: typeof item.label === 'string' && item.label.trim() ? item.label.trim() : undefined,
     };
   });
-}
-
-function asCoord(value: unknown): number | undefined {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
-  return Math.max(0, Math.min(2000, Math.round(value)));
 }
