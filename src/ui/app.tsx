@@ -23,9 +23,7 @@ type GenerateFileOutput = {
 type GenerateDrawioInput = {
   fileName: string;
   title?: string;
-  direction?: 'top-down' | 'left-right';
-  nodes: Array<{ id: string; label: string; kind?: 'process' | 'decision' | 'start' | 'end' | 'data' }>;
-  edges: Array<{ from: string; to: string; label?: string }>;
+  prompt: string;
 };
 
 type GenerateDrawioOutput = {
@@ -44,14 +42,7 @@ type GenerateDrawioOutput = {
 type GenerateSequenceDiagramInput = {
   fileName: string;
   title?: string;
-  participants: Array<{ id: string; label: string }>;
-  messages: Array<{
-    type?: 'message' | 'alt' | 'else' | 'loop' | 'opt' | 'par' | 'break' | 'end' | 'note' | 'activate' | 'deactivate';
-    from?: string;
-    to?: string;
-    label?: string;
-    kind?: 'sync' | 'async' | 'return' | 'self';
-  }>;
+  prompt: string;
 };
 
 type WebSearchInput = {
@@ -229,13 +220,13 @@ export function AdminScreen() {
         <article className="admin-card">
           <p className="admin-card-kicker">generate-drawio</p>
           <h2>Flowchart</h2>
-          <p>Sơ đồ quy trình, kiến trúc, yes/no. Tải file <code>.drawio</code>, mở trên diagrams.net.</p>
+          <p>OpenAI vẽ flowchart. Tải <code>.drawio</code>, mở trên diagrams.net.</p>
           <PromptCopy label="Thử prompt flowchart" text={FLOW_PROMPT} />
         </article>
         <article className="admin-card">
           <p className="admin-card-kicker">generate-sequencediagram</p>
           <h2>Sequence</h2>
-          <p>Luồng request/response, if/else, loop, note. Tải <code>.drawio</code> và <code>.txt</code> (sequencediagram.org).</p>
+          <p>OpenAI vẽ sequence (if/else, loop). Tải <code>.drawio</code> và <code>.txt</code> (sequencediagram.org).</p>
           <PromptCopy label="Thử prompt sequence" text={SEQUENCE_PROMPT} />
         </article>
         <article className="admin-card">
@@ -356,7 +347,7 @@ export function GenerateDrawioResult({
     toolResult.state === 'approval-requested'
   ) {
     return (
-      <ToolCard status="Building draw.io file…" busy>
+      <ToolCard status="OpenAI is drawing the flowchart…" busy>
         <DrawioInputPreview input={toolResult.input} />
       </ToolCard>
     );
@@ -421,7 +412,7 @@ export function GenerateSequenceDiagramResult({
     toolResult.state === 'approval-requested'
   ) {
     return (
-      <ToolCard status="Building sequence diagram…" busy>
+      <ToolCard status="OpenAI is drawing the sequence…" busy>
         <SequenceInputPreview input={toolResult.input} />
       </ToolCard>
     );
@@ -464,7 +455,7 @@ export function GenerateSequenceDiagramResult({
         <div><dt>draw.io</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
         <div><dt>.txt</dt><dd>{formatBytes(result.txtSizeBytes)}</dd></div>
       </dl>
-      <p className="count-preview">Open the .drawio in diagrams.net. Paste the .txt into sequencediagram.org.</p>
+      <p className="count-preview">Open the .drawio in diagrams.net to view. Paste the .txt into sequencediagram.org to edit.</p>
       <div className="generate-downloads">
         <DownloadLink
           fileName={result.fileName}
@@ -829,11 +820,10 @@ function DrawioInputPreview({ input }: { input?: unknown }) {
   }
   const record = input as Record<string, unknown>;
   const fileName = typeof record.fileName === 'string' ? record.fileName : 'diagram';
-  const nodes = Array.isArray(record.nodes) ? record.nodes.length : 0;
-  const title = typeof record.title === 'string' ? record.title : undefined;
+  const prompt = typeof record.prompt === 'string' ? record.prompt : '';
   return (
     <p className="count-preview">
-      {fileName}.drawio{title ? ` · ${title}` : ''}{nodes ? ` · ${nodes} shapes` : ''}
+      {fileName}.drawio{prompt ? ` · ${prompt.slice(0, 80)}${prompt.length > 80 ? '…' : ''}` : ''}
     </p>
   );
 }
@@ -844,11 +834,10 @@ function SequenceInputPreview({ input }: { input?: unknown }) {
   }
   const record = input as Record<string, unknown>;
   const fileName = typeof record.fileName === 'string' ? record.fileName : 'sequence';
-  const participants = Array.isArray(record.participants) ? record.participants.length : 0;
-  const title = typeof record.title === 'string' ? record.title : undefined;
+  const prompt = typeof record.prompt === 'string' ? record.prompt : '';
   return (
     <p className="count-preview">
-      {fileName}.drawio + .txt{title ? ` · ${title}` : ''}{participants ? ` · ${participants} lifelines` : ''}
+      {fileName}.drawio + .txt{prompt ? ` · ${prompt.slice(0, 80)}${prompt.length > 80 ? '…' : ''}` : ''}
     </p>
   );
 }

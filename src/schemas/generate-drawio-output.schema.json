@@ -56,7 +56,7 @@
     "previewSvg": {
       "type": "string",
       "maxLength": 80000,
-      "description": "Renderer-only SVG preview of the laid-out diagram."
+      "description": "Renderer-only SVG preview drawn by OpenAI."
     },
     "_sota": {
       "type": "object",

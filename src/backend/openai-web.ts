@@ -1,7 +1,6 @@
+import { extractOutputText, openaiResponses, requireOpenAi } from './openai-client.js';
 import { isRecord } from './tool.shared.js';
 
-const OPENAI_URL = 'https://api.openai.com/v1/responses';
-const DEFAULT_MODEL = 'gpt-4o-mini';
 const REWRITE_TIMEOUT_MS = 8000;
 const SEARCH_TIMEOUT_MS = 20000;
 
@@ -17,12 +16,7 @@ export type OpenAiWebSearchResult = {
 };
 
 export async function rewriteAndSearchWeb(query: string): Promise<OpenAiWebSearchResult> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured on the app backend');
-  }
-
-  const model = process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL;
+  const { apiKey, model } = requireOpenAi();
   const rewrittenQuery = await rewriteQuery(apiKey, model, query);
   const searched = await searchWeb(apiKey, model, rewrittenQuery, query);
   return {
@@ -79,44 +73,6 @@ async function searchWeb(
     throw new Error('OpenAI web search returned no source URLs');
   }
   return { sources };
-}
-
-async function openaiResponses(
-  apiKey: string,
-  body: Record<string, unknown>,
-  timeoutMs: number,
-): Promise<unknown> {
-  const response = await fetch(OPENAI_URL, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = openaiErrorMessage(payload) || `OpenAI HTTP ${response.status}`;
-    throw new Error(message);
-  }
-  return payload;
-}
-
-function extractOutputText(payload: unknown): string {
-  if (!isRecord(payload)) return '';
-  if (typeof payload.output_text === 'string' && payload.output_text.trim()) {
-    return payload.output_text.trim();
-  }
-  if (!Array.isArray(payload.output)) return '';
-  const parts: string[] = [];
-  for (const item of payload.output) {
-    if (!isRecord(item) || item.type !== 'message' || !Array.isArray(item.content)) continue;
-    for (const block of item.content) {
-      if (isRecord(block) && typeof block.text === 'string') parts.push(block.text);
-    }
-  }
-  return parts.join('\n').trim();
 }
 
 function extractSources(payload: unknown): WebSearchSource[] {
@@ -185,10 +141,4 @@ function hostname(url: string): string {
   } catch {
     return 'source';
   }
-}
-
-function openaiErrorMessage(payload: unknown): string | undefined {
-  if (!isRecord(payload) || !isRecord(payload.error)) return undefined;
-  if (typeof payload.error.message !== 'string') return undefined;
-  return payload.error.message.replace(/sk-[A-Za-z0-9_-]+/g, '[redacted]').slice(0, 180);
 }

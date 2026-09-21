@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.19
+version: 1.0.20
 displayName: Inkline
 description: "Draw.io diagrams, UML sequence diagrams, and web search."
 publisher:
@@ -10,13 +10,13 @@ publisher:
 contributes:
   skills:
     - name: generate-drawio
-      description: When the user wants a draw.io / diagrams.net flowchart, architecture, or process diagram, call generate-drawio. For sequence / UML interaction diagrams call generate-sequencediagram.
+      description: When the user wants a draw.io / diagrams.net flowchart, architecture, or process diagram, call generate-drawio with fileName and prompt. OpenAI draws the diagram. For sequence / UML interaction diagrams call generate-sequencediagram.
       appendsTo: system
       content: src/skills/generate-drawio
       timeoutMs: 3000
       failure_mode: skip
     - name: generate-sequencediagram
-      description: When the user wants a sequence diagram, UML sequence, request/response timeline, if/else, loop, note, or parallel path, call generate-sequencediagram instead of generate-drawio. It returns both a .drawio file and a SequenceDiagram.org .txt source file.
+      description: When the user wants a sequence diagram, UML sequence, request/response timeline, if/else, loop, note, or parallel path, call generate-sequencediagram with fileName and prompt. OpenAI draws it and returns .drawio plus SequenceDiagram.org .txt.
       appendsTo: system
       content: src/skills/generate-sequencediagram
       timeoutMs: 3000
@@ -29,18 +29,18 @@ contributes:
       failure_mode: skip
   tools:
     - name: generate-drawio
-      description: Generate a downloadable draw.io (.drawio) flowchart or architecture diagram from nodes and edges. Do not use for UML sequence diagrams — call generate-sequencediagram. Returns fileName, nodeCount, edgeCount, and XML for the download card.
+      description: OpenAI draws a flowchart from the user's prompt and returns a downloadable .drawio file. Pass fileName and prompt (the user's request in their words). Do not invent nodes or edges. Do not use for UML sequence diagrams — call generate-sequencediagram. Returns fileName, nodeCount, edgeCount.
       route: POST /tools/generate-drawio
       inputSchema: src/schemas/generate-drawio-input.schema.json
       outputSchema: src/schemas/generate-drawio-output.schema.json
-      timeoutMs: 15000
+      timeoutMs: 30000
       failure_mode: abort
     - name: generate-sequencediagram
-      description: Generate a downloadable draw.io sequence diagram and a SequenceDiagram.org .txt source file from participants and messages. Use for UML sequence, request/response, if/else (alt/else), loops, notes, and parallel paths. Pass native JSON arrays, not stringified arrays. Returns fileName (.drawio), txtFileName (.txt), participantCount, and messageCount.
+      description: OpenAI draws a UML sequence diagram from the user's prompt. Pass fileName and prompt. Returns .drawio plus SequenceDiagram.org .txt. Do not invent participants or messages.
       route: POST /tools/generate-sequencediagram
       inputSchema: src/schemas/generate-sequencediagram-input.schema.json
       outputSchema: src/schemas/generate-sequencediagram-output.schema.json
-      timeoutMs: 15000
+      timeoutMs: 30000
       failure_mode: abort
     - name: inkline-search
       description: Inkline live web search. Rewrite the query, search with OpenAI, return source URLs only — do not expect a summary. The Sota agent writes the answer. Always prefer this over platform /search, Web Search, webSearch, or web-search. Pass the original user question as query.
