@@ -42,7 +42,14 @@ type GenerateDrawioOutput = {
 type GenerateSequenceDiagramInput = {
   fileName: string;
   title?: string;
-  prompt: string;
+  participants: Array<{ id: string; label: string }>;
+  messages: Array<{
+    type?: 'message' | 'alt' | 'else' | 'loop' | 'opt' | 'par' | 'break' | 'end' | 'note' | 'activate' | 'deactivate';
+    from?: string;
+    to?: string;
+    label?: string;
+    kind?: 'sync' | 'async' | 'return' | 'self';
+  }>;
 };
 
 type WebSearchInput = {
@@ -226,7 +233,7 @@ export function AdminScreen() {
         <article className="admin-card">
           <p className="admin-card-kicker">generate-sequencediagram</p>
           <h2>Sequence</h2>
-          <p>OpenAI vẽ sequence (if/else, loop). Tải <code>.drawio</code> và <code>.txt</code> (sequencediagram.org).</p>
+          <p>Luồng request/response, if/else, loop, note. Tải <code>.drawio</code> và <code>.txt</code> (sequencediagram.org).</p>
           <PromptCopy label="Thử prompt sequence" text={SEQUENCE_PROMPT} />
         </article>
         <article className="admin-card">
@@ -412,7 +419,7 @@ export function GenerateSequenceDiagramResult({
     toolResult.state === 'approval-requested'
   ) {
     return (
-      <ToolCard status="OpenAI is drawing the sequence…" busy>
+      <ToolCard status="Building sequence diagram…" busy>
         <SequenceInputPreview input={toolResult.input} />
       </ToolCard>
     );
@@ -455,7 +462,7 @@ export function GenerateSequenceDiagramResult({
         <div><dt>draw.io</dt><dd>{formatBytes(result.sizeBytes)}</dd></div>
         <div><dt>.txt</dt><dd>{formatBytes(result.txtSizeBytes)}</dd></div>
       </dl>
-      <p className="count-preview">Open the .drawio in diagrams.net to view. Paste the .txt into sequencediagram.org to edit.</p>
+      <p className="count-preview">Open the .drawio in diagrams.net. Paste the .txt into sequencediagram.org.</p>
       <div className="generate-downloads">
         <DownloadLink
           fileName={result.fileName}
@@ -834,10 +841,11 @@ function SequenceInputPreview({ input }: { input?: unknown }) {
   }
   const record = input as Record<string, unknown>;
   const fileName = typeof record.fileName === 'string' ? record.fileName : 'sequence';
-  const prompt = typeof record.prompt === 'string' ? record.prompt : '';
+  const participants = Array.isArray(record.participants) ? record.participants.length : 0;
+  const title = typeof record.title === 'string' ? record.title : undefined;
   return (
     <p className="count-preview">
-      {fileName}.drawio + .txt{prompt ? ` · ${prompt.slice(0, 80)}${prompt.length > 80 ? '…' : ''}` : ''}
+      {fileName}.drawio + .txt{title ? ` · ${title}` : ''}{participants ? ` · ${participants} lifelines` : ''}
     </p>
   );
 }

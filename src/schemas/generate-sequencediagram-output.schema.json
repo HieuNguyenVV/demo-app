@@ -83,7 +83,7 @@
     "previewSvg": {
       "type": "string",
       "maxLength": 80000,
-      "description": "Renderer-only SVG preview drawn by OpenAI."
+      "description": "Renderer-only SVG preview of the sequence diagram."
     },
     "_sota": {
       "type": "object",

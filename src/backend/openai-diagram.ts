@@ -17,14 +17,6 @@ export type OpenAiFlowchart = {
   edgeCount: number;
 };
 
-export type OpenAiSequence = {
-  title: string;
-  svg: string;
-  sequenceText: string;
-  participantCount: number;
-  messageCount: number;
-};
-
 export function parseDiagramPrompt(input: unknown): DiagramPrompt {
   if (!isRecord(input)) {
     throw new InvalidToolInputError('input must be an object');
@@ -71,34 +63,6 @@ export async function drawFlowchartSvg(prompt: string, repair?: string): Promise
     svg,
     nodeCount: Math.max(1, asCount(data.nodeCount) || countTags(svg, 'rect|ellipse|circle|polygon')),
     edgeCount: Math.max(0, asCount(data.edgeCount) || countTags(svg, 'path|line|polyline')),
-  };
-}
-
-export async function drawSequenceSvg(prompt: string, repair?: string): Promise<OpenAiSequence> {
-  const data = await requestDiagramJson([
-    'Draw a polished UML sequence diagram as a self-contained SVG, plus SequenceDiagram.org source. Output JSON only.',
-    'Shape: {"title":"string","svg":"<svg ...>...</svg>","sequenceText":"title Login\\nparticipant User\\nparticipant API\\nUser->API: POST /login","participantCount":3,"messageCount":5}',
-    'Visual rules:',
-    '- Lifelines equally spaced. Activation bars. Solid call arrows, dashed returns. alt/loop frames with conditions.',
-    '- Generous spacing, no overlapping text. White background. font-family: "Segoe UI", Helvetica, sans-serif.',
-    '- Vietnamese labels are fine. Inline attributes only. SVG under 60KB. width, height, viewBox on <svg>.',
-    'sequenceText rules: sequencediagram.org syntax. participant lines, then messages with ->, -->, ->>, alt/else/end, loop/end, note.',
-    '',
-    `User request: ${prompt}`,
-    repair ? `Fix this problem: ${repair}` : '',
-  ].filter(Boolean).join('\n'));
-  const svg = sanitizeSvg(asString(data.svg, 'svg'));
-  const sequenceText = asString(data.sequenceText, 'sequenceText').slice(0, 20000);
-  const stats = countSequenceStats(sequenceText);
-  if (stats.participantCount < 2 || stats.messageCount < 1) {
-    throw new Error('OpenAI sequenceText is missing participants or messages');
-  }
-  return {
-    title: asString(data.title, 'title').slice(0, 80) || 'Sequence',
-    svg,
-    sequenceText,
-    participantCount: Math.max(2, asCount(data.participantCount) || stats.participantCount),
-    messageCount: Math.max(1, asCount(data.messageCount) || stats.messageCount),
   };
 }
 
@@ -183,14 +147,6 @@ function asCount(value: unknown): number {
 
 function countTags(svg: string, names: string): number {
   return (svg.match(new RegExp(`<(?:${names})\\b`, 'gi')) ?? []).length;
-}
-
-function countSequenceStats(text: string): { participantCount: number; messageCount: number } {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  return {
-    participantCount: lines.filter((line) => /^(participant|actor)\s+/i.test(line)).length,
-    messageCount: lines.filter((line) => /-+>|-->|<--|->>/.test(line)).length,
-  };
 }
 
 function clamp(value: number, min: number, max: number): number {
