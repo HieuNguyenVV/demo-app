@@ -1,7 +1,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["originalQuery", "rewrittenQuery", "summary", "sourceCount", "sources"],
+  "required": ["originalQuery", "rewrittenQuery", "sourceCount", "sources"],
   "properties": {
     "originalQuery": {
       "type": "string",
@@ -13,12 +13,6 @@
       "minLength": 1,
       "maxLength": 300
     },
-    "summary": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 4000,
-      "description": "Grounded answer for the Sota agent to use in chat."
-    },
     "sourceCount": {
       "type": "integer",
       "minimum": 0
@@ -26,6 +20,7 @@
     "sources": {
       "type": "array",
       "maxItems": 8,
+      "description": "Pages found for the Sota agent to read and synthesize an answer. No pre-written summary.",
       "items": {
         "type": "object",
         "additionalProperties": false,

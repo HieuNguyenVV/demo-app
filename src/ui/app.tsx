@@ -61,7 +61,6 @@ type WebSearchInput = {
 type WebSearchOutput = {
   originalQuery: string;
   rewrittenQuery: string;
-  summary: string;
   sourceCount: number;
   sources: Array<{ title: string; url: string }>;
 };
@@ -518,7 +517,7 @@ export function WebSearchResult({
   if (toolResult.state !== 'output-available') return null;
 
   const result = toolResult.result;
-  if (!result?.summary) {
+  if (!result || !Array.isArray(result.sources)) {
     return <ToolCard status="Could not complete web search." />;
   }
 
@@ -531,18 +530,18 @@ export function WebSearchResult({
       {result.rewrittenQuery !== result.originalQuery ? (
         <p className="count-preview">Original: {result.originalQuery}</p>
       ) : null}
-      <p className="analyze-summary">{result.summary}</p>
-      {result.sources?.length ? (
+      <p className="count-preview">{result.sourceCount} sources</p>
+      {result.sources.length ? (
         <ul className="search-sources">
           {result.sources.map((source) => (
             <li key={source.url}>
-              <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+              <a href={source.url} target="_blank" rel="noreferrer">{source.title || source.url}</a>
               <span className="search-source-host">{hostLabel(source.url)}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="count-preview">No cited sources.</p>
+        <p className="count-preview">No source URLs found.</p>
       )}
     </ToolCard>
   );

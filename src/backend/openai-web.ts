@@ -13,7 +13,6 @@ export type WebSearchSource = {
 
 export type OpenAiWebSearchResult = {
   rewrittenQuery: string;
-  summary: string;
   sources: WebSearchSource[];
 };
 
@@ -28,7 +27,6 @@ export async function rewriteAndSearchWeb(query: string): Promise<OpenAiWebSearc
   const searched = await searchWeb(apiKey, model, rewrittenQuery, query);
   return {
     rewrittenQuery,
-    summary: searched.summary,
     sources: searched.sources.slice(0, 8),
   };
 }
@@ -53,7 +51,7 @@ async function searchWeb(
   model: string,
   rewrittenQuery: string,
   originalQuery: string,
-): Promise<{ summary: string; sources: WebSearchSource[] }> {
+): Promise<{ sources: WebSearchSource[] }> {
   const data = await openaiResponses(apiKey, {
     model,
     tools: [
@@ -68,19 +66,19 @@ async function searchWeb(
     ],
     include: ['web_search_call.action.sources'],
     input: [
-      'Search the live web and answer the user. Cite sources. Prefer recent, reputable pages.',
-      'If the user wrote in Vietnamese, answer in Vietnamese.',
+      'Search the live web for pages that help answer the question.',
+      'Do NOT write an answer, summary, or article.',
+      'Return only a short numbered list of the source URLs you found.',
       `Search query: ${rewrittenQuery}`,
       `Original question: ${originalQuery}`,
     ].join('\n'),
   }, SEARCH_TIMEOUT_MS);
 
-  const summary = extractOutputText(data).slice(0, 4000);
   const sources = extractSources(data);
-  if (!summary) {
-    throw new Error('OpenAI returned an empty search answer');
+  if (sources.length === 0) {
+    throw new Error('OpenAI web search returned no source URLs');
   }
-  return { summary, sources };
+  return { sources };
 }
 
 async function openaiResponses(
@@ -123,26 +121,42 @@ function extractOutputText(payload: unknown): string {
 
 function extractSources(payload: unknown): WebSearchSource[] {
   const found = new Map<string, WebSearchSource>();
-  if (!isRecord(payload) || !Array.isArray(payload.output)) return [];
+  if (!isRecord(payload)) return [];
 
-  for (const item of payload.output) {
-    if (!isRecord(item)) continue;
-    if (item.type === 'web_search_call' && isRecord(item.action) && Array.isArray(item.action.sources)) {
-      for (const source of item.action.sources) {
-        addSource(found, source);
+  if (Array.isArray(payload.output)) {
+    for (const item of payload.output) {
+      if (!isRecord(item)) continue;
+      if (item.type === 'web_search_call' && isRecord(item.action) && Array.isArray(item.action.sources)) {
+        for (const source of item.action.sources) {
+          addSource(found, source);
+        }
       }
-    }
-    if (item.type === 'message' && Array.isArray(item.content)) {
-      for (const block of item.content) {
-        if (!isRecord(block) || !Array.isArray(block.annotations)) continue;
-        for (const annotation of block.annotations) {
-          addSource(found, annotation);
+      if (item.type === 'message' && Array.isArray(item.content)) {
+        for (const block of item.content) {
+          if (!isRecord(block)) continue;
+          if (Array.isArray(block.annotations)) {
+            for (const annotation of block.annotations) {
+              addSource(found, annotation);
+            }
+          }
+          if (typeof block.text === 'string') {
+            addUrlsFromText(found, block.text);
+          }
         }
       }
     }
   }
 
+  addUrlsFromText(found, extractOutputText(payload));
   return [...found.values()];
+}
+
+function addUrlsFromText(found: Map<string, WebSearchSource>, text: string) {
+  const matches = text.match(/https?:\/\/[^\s)\]>"']+/g);
+  if (!matches) return;
+  for (const raw of matches) {
+    addSource(found, { url: raw.replace(/[.,;]+$/, '') });
+  }
 }
 
 function addSource(found: Map<string, WebSearchSource>, value: unknown) {

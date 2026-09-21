@@ -4,7 +4,6 @@ import { InvalidToolInputError, UpstreamToolError, isRecord } from './tool.share
 export type WebSearchResult = {
   originalQuery: string;
   rewrittenQuery: string;
-  summary: string;
   sourceCount: number;
   sources: Array<{ title: string; url: string }>;
 };
@@ -16,7 +15,6 @@ export async function handleWebSearch(input: unknown): Promise<WebSearchResult> 
     return {
       originalQuery: query,
       rewrittenQuery: result.rewrittenQuery,
-      summary: result.summary,
       sourceCount: result.sources.length,
       sources: result.sources.map((source) => ({ title: source.title, url: source.url })),
     };

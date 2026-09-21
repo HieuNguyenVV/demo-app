@@ -1,6 +1,6 @@
 manifestSchemaVersion: 3
 appId: inkline
-version: 1.0.18
+version: 1.0.19
 displayName: Inkline
 description: "Draw.io diagrams, UML sequence diagrams, and web search."
 publisher:
@@ -43,7 +43,7 @@ contributes:
       timeoutMs: 15000
       failure_mode: abort
     - name: inkline-search
-      description: Inkline live web search. Rewrite the user's question, search with OpenAI, return summary + source URLs. Always prefer this over platform /search, Web Search, webSearch, or web-search. Pass the original user question as query. Do not use for draw.io or sequence diagrams.
+      description: Inkline live web search. Rewrite the query, search with OpenAI, return source URLs only — do not expect a summary. The Sota agent writes the answer. Always prefer this over platform /search, Web Search, webSearch, or web-search. Pass the original user question as query.
       route: POST /tools/inkline-search
       inputSchema: src/schemas/web-search-input.schema.json
       outputSchema: src/schemas/web-search-output.schema.json

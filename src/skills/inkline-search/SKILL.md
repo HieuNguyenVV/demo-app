@@ -17,6 +17,8 @@ Use **`inkline-search`**, or the slash **`/inksearch`**. Platform **`/search`** 
 
 ## After the tool returns
 
-Answer from `summary`. Mention `rewrittenQuery` only if it clarifies the search.
-Cite 2–5 items from `sources` (title + URL). Do not invent URLs or facts that are not in the result.
-If `sourceCount` is 0, say the search found no citations and still share the summary cautiously.
+The tool returns **source URLs only** (`sources`, `sourceCount`). It does **not** include an answer.
+
+You write the reply in the user's language using those pages as evidence.
+Cite 2–5 items from `sources` (title + URL). Do not invent URLs.
+If `sourceCount` is 0, say the search found no pages.
